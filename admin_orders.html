@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Bhikharam Chandmal Admin Orders</title>
+  <!-- Google Fonts Poppins -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Tailwind CSS Play CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#7d0000',
+            secondary: '#ffd54a',
+            bgsoft: '#f7f4ec',
+          },
+          fontFamily: {
+            sans: ['Poppins', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-bgsoft font-sans min-h-screen text-slate-800 pb-24">
+
+  <!-- Sticky Header -->
+  <header class="sticky top-0 z-40 bg-primary text-white border-b-4 border-secondary shadow-md px-4 py-3 flex items-center justify-between font-sans">
+    <div class="flex items-center gap-2">
+      <a href="admin_dashboard.html" class="w-9 h-9 hover:bg-black/20 rounded-xl flex items-center justify-center transition">
+        <i data-lucide="chevron-left" class="text-secondary w-6 h-6"></i>
+      </a>
+      <div>
+        <h1 class="text-sm font-bold tracking-wider leading-tight">ORDERS & PAYMENTS</h1>
+        <p class="text-[10px] font-semibold text-secondary tracking-widest uppercase">Admin Operations</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-1 bg-[#ffd54a]/10 border border-[#ffd54a]/30 px-2.5 py-1 rounded-full shrink-0">
+      <i data-lucide="receipt" class="w-3.5 h-3.5 text-secondary"></i>
+      <span id="order-count-header" class="text-[9px] text-[#ffd54a] font-bold uppercase tracking-wider">0 orders</span>
+    </div>
+  </header>
+
+  <main class="max-w-md mx-auto p-4 space-y-4">
+    <!-- Search and filter -->
+    <div class="space-y-2">
+      <!-- Search -->
+      <div class="relative">
+        <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+          <i data-lucide="search" class="text-slate-400 w-5 h-5"></i>
+        </span>
+        <input 
+          type="text" 
+          id="search-input" 
+          placeholder="Search by order ID, customer, store..." 
+          class="w-full pl-10 pr-10 py-3 bg-white border border-rose-950/5 rounded-2xl text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-xs transition"
+        >
+        <button 
+          id="clear-search" 
+          class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600 hidden"
+        >
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <!-- Filter Buttons scroll -->
+      <div class="flex items-center gap-1.5 overflow-x-auto py-1 scrollbar-hide shrink-0">
+        <button class="filter-tab px-3 py-1.5 rounded-xl text-xs font-bold transition border shrink-0 bg-primary text-white border-primary" data-status="all">All</button>
+        <button class="filter-tab px-3 py-1.5 rounded-xl text-xs font-semibold text-amber-600 bg-amber-50 border-amber-200" data-status="pending">Pending</button>
+        <button class="filter-tab px-3 py-1.5 rounded-xl text-xs font-semibold text-blue-600 bg-blue-50 border-blue-200" data-status="confirmed">Confirmed</button>
+        <button class="filter-tab px-3 py-1.5 rounded-xl text-xs font-semibold text-emerald-600 bg-emerald-50 border-emerald-200" data-status="delivered">Delivered</button>
+        <button class="filter-tab px-3 py-1.5 rounded-xl text-xs font-semibold text-rose-600 bg-rose-50 border-rose-200" data-status="cancelled">Cancelled</button>
+      </div>
+    </div>
+
+    <!-- Loader placeholder -->
+    <div id="orders-spinner" class="py-12 flex justify-center">
+      <div class="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent"></div>
+    </div>
+
+    <!-- Orders List Stack -->
+    <div id="orders-list" class="space-y-4">
+      <!-- Injected list of orders -->
+    </div>
+
+    <!-- Empty State -->
+    <div id="empty-state" class="hidden text-center py-12 bg-white rounded-3xl p-6 border border-rose-950/5">
+      <div class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-3">
+        <i data-lucide="box" class="text-slate-400 w-8 h-8"></i>
+      </div>
+      <p class="font-bold text-slate-700 text-sm">No bookings discovered</p>
+      <p class="text-xs text-slate-400 mt-1">There are no orders submitted matching current filters.</p>
+    </div>
+  </main>
+
+  <!-- POPUP: Order Edit/Update Dialog Modal -->
+  <div id="order-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-3xl shadow-xl w-full max-w-sm max-h-[90vh] overflow-y-auto transform transition scale-95 duration-200">
+      
+      <!-- Modal Header -->
+      <div class="bg-primary px-6 py-4 flex items-center justify-between text-white border-b border-rose-950/10">
+        <div>
+          <h3 class="font-bold text-base tracking-wide">Manage Order</h3>
+          <p id="modal-order-id" class="text-[10px] text-rose-200 font-mono tracking-widest uppercase mt-0.5">ORDER_N/A</p>
+        </div>
+        <button id="close-modal" class="w-8 h-8 hover:bg-black/10 rounded-lg flex items-center justify-center transition">
+          <i data-lucide="x" class="text-white w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Modal Body Form -->
+      <form id="order-form" class="p-6 space-y-4">
+        <input type="hidden" id="form-order-key">
+
+        <!-- Info Card Summary -->
+        <div class="bg-slate-50 border border-slate-100 p-3.5 rounded-2xl text-[11px] text-slate-600 space-y-1.5">
+          <div class="flex justify-between">
+            <span class="font-semibold text-slate-400 uppercase tracking-wider">Booked By:</span>
+            <span id="modal-customer" class="font-bold text-slate-700">N/A</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="font-semibold text-slate-400 uppercase tracking-wider">Target Store:</span>
+            <span id="modal-store" class="font-bold text-slate-700truncate max-w-[170px] text-right">N/A</span>
+          </div>
+          <div class="flex justify-between border-t border-dashed border-slate-200 pt-1.5 text-xs font-bold mt-1">
+            <span class="text-slate-800">Grand Total:</span>
+            <span id="modal-total" class="text-primary">₹0.00</span>
+          </div>
+        </div>
+
+        <!-- Update Status Select -->
+        <div>
+          <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Dispatch / Booking Status</label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 flex items-center pl-3">
+              <i data-lucide="truck" class="text-slate-400 w-4.5 h-4.5"></i>
+            </span>
+            <select 
+              id="form-status" 
+              required
+              class="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-xs font-bold focus:ring-2 focus:ring-primary/20 outline-none transition cursor-pointer"
+            >
+              <option value="pending">Pending Review</option>
+              <option value="confirmed">Confirmed / Packing</option>
+              <option value="delivered">Delivered / Handover</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Payments Form grid -->
+        <div class="space-y-3.5 border-t border-slate-100 pt-4">
+          <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wide">Update Payments Received</h4>
+
+          <!-- Advance Amount Paid -->
+          <div>
+            <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Advance Amount Paid (₹)</label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-500 font-bold text-xs select-none">₹</span>
+              <input 
+                type="number" 
+                id="form-advance" 
+                placeholder="0.00" 
+                step="0.01" 
+                min="0"
+                class="w-full pl-7 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-xs focus:ring-2 focus:ring-primary/20 outline-none transition font-semibold"
+              >
+            </div>
+          </div>
+
+          <!-- Final Amount Paid -->
+          <div>
+            <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Final Amount Paid (₹)</label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-500 font-bold text-xs select-none">₹</span>
+              <input 
+                type="number" 
+                id="form-final" 
+                placeholder="0.00" 
+                step="0.01" 
+                min="0"
+                class="w-full pl-7 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-xs focus:ring-2 focus:ring-primary/20 outline-none transition font-semibold"
+              >
+            </div>
+          </div>
+        </div>
+
+        <!-- Calculations visual review -->
+        <div class="bg-amber-50/50 p-3 rounded-2xl border border-amber-200/50 flex justify-between items-center text-xs">
+          <div>
+            <div class="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Remaining Balance</div>
+            <div id="modal-calc-balance" class="font-bold text-slate-800 text-sm mt-0.5">₹0.00</div>
+          </div>
+          <div id="modal-payment-indicator" class="hidden font-bold text-[10px] uppercase text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-2.5 py-1">
+            Payment Complete
+          </div>
+        </div>
+
+        <!-- Submit Button -->
+        <button 
+          type="submit" 
+          class="w-full bg-primary hover:bg-rose-950 active:scale-[0.97] text-white py-3 px-4 rounded-xl font-bold text-xs shadow-md transition flex items-center justify-center gap-1.5 pt-2.5 pb-2.5"
+        >
+          <i data-lucide="save" class="w-4 h-4"></i>
+          <span>Save Order Status & Payments</span>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Bottom navigation -->
+  <nav class="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-rose-950/5 shadow-lg max-w-md mx-auto flex items-center justify-around py-2 px-1">
+    <a href="admin_dashboard.html" class="flex flex-col items-center text-slate-400 hover:text-primary transition py-1">
+      <i data-lucide="home" class="w-5 h-5"></i>
+      <span class="text-[9px] font-semibold mt-0.5">Home</span>
+    </a>
+    <a href="admin_users.html" class="flex flex-col items-center text-slate-400 hover:text-primary transition py-1">
+      <i data-lucide="users" class="w-5 h-5"></i>
+      <span class="text-[9px] font-semibold mt-0.5">Users</span>
+    </a>
+    <a href="admin_stores.html" class="flex flex-col items-center text-slate-400 hover:text-primary transition py-1">
+      <i data-lucide="store" class="w-5 h-5"></i>
+      <span class="text-[9px] font-semibold mt-0.5">Stores</span>
+    </a>
+    <a href="admin_products.html" class="flex flex-col items-center text-slate-400 hover:text-primary transition py-1">
+      <i data-lucide="package" class="w-5 h-5"></i>
+      <span class="text-[9px] font-semibold mt-0.5">Products</span>
+    </a>
+    <a href="admin_orders.html" class="flex flex-col items-center text-primary transition py-1">
+      <i data-lucide="shopping-bag" class="w-5 h-5"></i>
+      <span class="text-[9px] font-bold mt-0.5">Orders</span>
+    </a>
+  </nav>
+
+  <!-- Script logic -->
+  <script type="module">
+    import { 
+      db, 
+      ref, 
+      get, 
+      update, 
+      onValue, 
+      DB_ROOT, 
+      checkAdminSession, 
+      showToast 
+    } from "./firebase-config.js";
+
+    let allOrders = {};
+    let filteredOrders = [];
+    let activeFilter = "all";
+    let activeSearchText = "";
+
+    document.addEventListener("DOMContentLoaded", async () => {
+      lucide.createIcons();
+
+      // Session verification
+      const verified = await checkAdminSession();
+      if (!verified) {
+        window.location.href = "admin_login.html";
+        return;
+      }
+
+      // Dialog Element References
+      const orderModal = document.getElementById("order-modal");
+      const closeModal = document.getElementById("close-modal");
+      const orderForm = document.getElementById("order-form");
+      const modalOrderId = document.getElementById("modal-order-id");
+      const modalCustomer = document.getElementById("modal-customer");
+      const modalStore = document.getElementById("modal-store");
+      const modalTotal = document.getElementById("modal-total");
+      const modalCalcBalance = document.getElementById("modal-calc-balance");
+      const modalPaymentIndicator = document.getElementById("modal-payment-indicator");
+
+      const formOrderKey = document.getElementById("form-order-key");
+      const formStatus = document.getElementById("form-status");
+      const formAdvance = document.getElementById("form-advance");
+      const formFinal = document.getElementById("form-final");
+
+      // Search & Filters Elements
+      const searchInput = document.getElementById("search-input");
+      const clearSearchBtn = document.getElementById("clear-search");
+      const ordersList = document.getElementById("orders-list");
+      const emptyState = document.getElementById("empty-state");
+      const orderCountHeader = document.getElementById("order-count-header");
+      const ordersSpinner = document.getElementById("orders-spinner");
+
+      // Balance instant math logic on changes
+      function recalculateBalance() {
+        const orderKey = formOrderKey.value;
+        const currentOrder = allOrders[orderKey];
+        if (!currentOrder) return;
+
+        const grandTotal = parseFloat(currentOrder.grandTotal || 0);
+        const advVal = parseFloat(formAdvance.value || 0);
+        const finVal = parseFloat(formFinal.value || 0);
+
+        const balance = grandTotal - advVal - finVal;
+        modalCalcBalance.innerText = `₹${balance.toFixed(2)}`;
+
+        if (balance <= 0) {
+          modalPaymentIndicator.classList.remove("hidden");
+        } else {
+          modalPaymentIndicator.classList.add("hidden");
+        }
+      }
+
+      formAdvance.addEventListener("input", recalculateBalance);
+      formFinal.addEventListener("input", recalculateBalance);
+
+      // RTDB setup order sync listener
+      const ordersRef = ref(db, `${DB_ROOT}/orders`);
+      onValue(ordersRef, (snapshot) => {
+        ordersSpinner.classList.add("hidden");
+        if (snapshot.exists()) {
+          allOrders = snapshot.val();
+        } else {
+          allOrders = {};
+        }
+        applyFilters();
+      }, (error) => {
+        console.error(error);
+        showToast("Failed to fetch orders: " + error.message, "error");
+        ordersSpinner.classList.add("hidden");
+      });
+
+      // Apply Filter conditions
+      function applyFilters() {
+        const oEntries = Object.entries(allOrders);
+        orderCountHeader.innerText = `${oEntries.length} orders`;
+
+        let filtered = oEntries;
+
+        // Apply tab status filter
+        if (activeFilter !== "all") {
+          filtered = filtered.filter(([id, o]) => o.status === activeFilter);
+        }
+
+        // Apply searching keyword matches
+        if (activeSearchText) {
+          filtered = filtered.filter(([id, o]) => {
+            const idMatch = id.toLowerCase().includes(activeSearchText.toLowerCase());
+            const userMatch = o.userName && o.userName.toLowerCase().includes(activeSearchText.toLowerCase());
+            const storeMatch = o.storeName && o.storeName.toLowerCase().includes(activeSearchText.toLowerCase());
+            const notesMatch = o.notes && o.notes.toLowerCase().includes(activeSearchText.toLowerCase());
+            return idMatch || userMatch || storeMatch || notesMatch;
+          });
+        }
+
+        // Sort descending by timestamp (newest bookings first)
+        filtered.sort((a,b) => (b[1].createdAt || 0) - (a[1].createdAt || 0));
+        
+        filteredOrders = filtered;
+        renderOrders();
+      }
+
+      // Render orders on client screen
+      function renderOrders() {
+        ordersList.innerHTML = "";
+        
+        if (filteredOrders.length === 0) {
+          emptyState.classList.remove("hidden");
+          return;
+        }
+
+        emptyState.classList.add("hidden");
+
+        filteredOrders.forEach(([orderKey, order]) => {
+          const card = document.createElement("div");
+          card.className = "bg-white rounded-3xl p-4 border border-rose-950/5 shadow-xs space-y-3 relative overflow-hidden transition hover:shadow-sm";
+          
+          // Badge Colors on Status
+          let statusBadgeClass = "bg-amber-50 text-amber-700 border-amber-200";
+          if (order.status === "confirmed") statusBadgeClass = "bg-blue-50 text-blue-700 border-blue-200";
+          if (order.status === "delivered") statusBadgeClass = "bg-emerald-50 text-emerald-700 border-emerald-200";
+          if (order.status === "cancelled") statusBadgeClass = "bg-rose-50 text-rose-700 border-rose-200";
+
+          // Calculate Balances
+          const grandTotal = parseFloat(order.grandTotal || 0);
+          const advPaid = parseFloat(order.advanceAmount || 0);
+          const finPaid = parseFloat(order.finalAmount || 0);
+          const balance = grandTotal - advPaid - finPaid;
+
+          const paymentIndicatorHtml = balance <= 0
+            ? `<span class="bg-emerald-500 text-white font-bold text-[9px] uppercase px-2 py-0.5 rounded-full">Paid</span>`
+            : `<span class="bg-amber-50 text-amber-700 font-bold border border-amber-200 text-[9px] uppercase px-2 py-0.5 rounded-full">₹${balance.toFixed(2)} Bal</span>`;
+
+          const dateStr = order.createdAt ? new Date(order.createdAt).toLocaleDateString("en-IN", {
+            day: "numeric",
+            month: "short",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit"
+          }) : "Unknown Date";
+
+          // Render cart items inside card block for visibility
+          let itemsHtml = "";
+          if (order.items) {
+            Object.values(order.items).forEach(item => {
+              itemsHtml += `
+                <div class="flex items-center justify-between text-[11px] text-slate-500 border-b border-dashed border-slate-100 py-1.5">
+                  <div class="flex items-center gap-1.5">
+                    <span class="font-bold text-slate-700">${item.qty}x</span>
+                    <span>${item.name}</span>
+                  </div>
+                  <span>₹${(item.price * item.qty).toFixed(2)}</span>
+                </div>
+              `;
+            });
+          }
+
+          card.innerHTML = `
+            <!-- Top Details block -->
+            <div class="flex items-start justify-between">
+              <div>
+                <div class="text-[10px] text-slate-400 font-mono tracking-wider uppercase">${orderKey}</div>
+                <div class="text-[10px] text-slate-400 font-medium mt-0.5">${dateStr}</div>
+              </div>
+              <div class="flex items-center gap-1.5 shrink-0">
+                <span class="text-[10px] font-bold uppercase border px-2.5 py-0.5 rounded-full ${statusBadgeClass}">${order.status}</span>
+                ${paymentIndicatorHtml}
+              </div>
+            </div>
+
+            <!-- Customer & Store info panel -->
+            <div class="grid grid-cols-2 gap-3 bg-slate-50 rounded-2xl p-3 border border-slate-100 text-[11px] text-slate-600">
+              <div class="space-y-0.5">
+                <div class="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Booked By</div>
+                <div class="font-bold text-slate-800">${order.userName || "Unknown"}</div>
+                <div class="text-slate-500 truncate text-[10px]">${order.storeMobile || "No Contact"}</div>
+              </div>
+              <div class="space-y-0.5 border-l border-slate-200 pl-3">
+                <div class="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Target Store</div>
+                <div class="font-bold text-slate-800 truncate">${order.storeName || "N/A"}</div>
+                <div class="text-slate-500 truncate text-[10px]">${order.storeAddress || ""}</div>
+              </div>
+            </div>
+
+            <!-- Products Sublist Drawer -->
+            <div class="space-y-1">
+              <div class="text-[9px] text-slate-400 font-bold uppercase tracking-wider pl-1">Items Summary</div>
+              <div class="bg-white/40 rounded-xl p-1.5">
+                ${itemsHtml}
+              </div>
+            </div>
+
+            <!-- Total Price and action row -->
+            <div class="flex items-center justify-between pt-2 border-t border-slate-100">
+              <div>
+                <div class="text-[9px] text-slate-400 font-medium. uppercase">Grand Booking Total</div>
+                <div class="text-sm font-black text-primary">₹${grandTotal.toFixed(2)}</div>
+              </div>
+              
+              <button class="open-manage-btn bg-primary hover:bg-rose-950 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition flex items-center gap-1.5" data-id="${orderKey}">
+                <i data-lucide="receipt" class="w-3.5 h-3.5 text-secondary"></i>
+                <span>Manage Order</span>
+              </button>
+            </div>
+          `;
+
+          ordersList.appendChild(card);
+        });
+
+        lucide.createIcons();
+
+        // Attach action click Handlers
+        document.querySelectorAll(".open-manage-btn").forEach(btn => {
+          btn.onclick = (e) => {
+            const key = e.currentTarget.getAttribute("data-id");
+            openManageModal(key);
+          };
+        });
+      }
+
+      // Open manage option modal dialog
+      function openManageModal(orderKey) {
+        const order = allOrders[orderKey];
+        if (!order) return;
+
+        // Populate Modal Fields
+        formOrderKey.value = orderKey;
+        modalOrderId.innerText = orderKey;
+        modalCustomer.innerText = order.userName || "N/A";
+        modalStore.innerText = order.storeName || "N/A";
+        modalTotal.innerText = `₹${parseFloat(order.grandTotal).toFixed(2)}`;
+
+        formStatus.value = order.status || "pending";
+        formAdvance.value = order.advanceAmount || "0";
+        formFinal.value = order.finalAmount || "0";
+
+        recalculateBalance();
+
+        orderModal.classList.remove("hidden");
+        document.body.classList.add("overflow-hidden");
+      }
+
+      // Close modal
+      closeModal.onclick = () => {
+        orderModal.classList.add("hidden");
+        document.body.classList.remove("overflow-hidden");
+      };
+
+      // Form submission click updates status and values
+      orderForm.onsubmit = async (e) => {
+        e.preventDefault();
+
+        const key = formOrderKey.value;
+        const status = formStatus.value;
+        const advanceAmount = parseFloat(formAdvance.value || 0);
+        const finalAmount = parseFloat(formFinal.value || 0);
+
+        ordersSpinner.classList.remove("hidden");
+        orderModal.classList.add("hidden");
+        document.body.classList.remove("overflow-hidden");
+
+        try {
+          const updateRef = ref(db, `${DB_ROOT}/orders/${key}`);
+          await update(updateRef, {
+            status,
+            advanceAmount,
+            finalAmount
+          });
+          showToast("Order status and payments updated successfully!", "success");
+        } catch (err) {
+          showToast("Database Save Error: " + err.message, "error");
+        } finally {
+          ordersSpinner.classList.add("hidden");
+        }
+      };
+
+      // Filter tabs interaction
+      document.querySelectorAll(".filter-tab").forEach(tab => {
+        tab.onclick = (e) => {
+          document.querySelectorAll(".filter-tab").forEach(t => {
+            t.className = "filter-tab px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-500 bg-slate-50 border border-slate-200 shrink-0";
+          });
+          
+          const clickedId = e.currentTarget.getAttribute("data-status");
+          activeFilter = clickedId;
+
+          // Style active tab
+          if (activeFilter === "all") {
+            e.currentTarget.className = "filter-tab px-3 py-1.5 rounded-xl text-xs font-bold transition border shrink-0 bg-primary text-white border-primary";
+          } else if (activeFilter === "pending") {
+            e.currentTarget.className = "filter-tab px-3 py-1.5 rounded-xl text-xs font-bold transition border shrink-0 bg-amber-500 text-white border-amber-500";
+          } else if (activeFilter === "confirmed") {
+            e.currentTarget.className = "filter-tab px-3 py-1.5 rounded-xl text-xs font-bold transition border shrink-0 bg-blue-500 text-white border-blue-500";
+          } else if (activeFilter === "delivered") {
+            e.currentTarget.className = "filter-tab px-3 py-1.5 rounded-xl text-xs font-bold transition border shrink-0 bg-emerald-500 text-white border-emerald-500";
+          } else if (activeFilter === "cancelled") {
+            e.currentTarget.className = "filter-tab px-3 py-1.5 rounded-xl text-xs font-bold transition border shrink-0 bg-rose-500 text-white border-rose-500";
+          }
+
+          applyFilters();
+        };
+      });
+
+      // Search listeners
+      searchInput.oninput = (e) => {
+        activeSearchText = e.target.value;
+        if (activeSearchText) {
+          clearSearchBtn.classList.remove("hidden");
+        } else {
+          clearSearchBtn.classList.add("hidden");
+        }
+        applyFilters();
+      };
+
+      clearSearchBtn.onclick = () => {
+        searchInput.value = "";
+        activeSearchText = "";
+        clearSearchBtn.classList.add("hidden");
+        applyFilters();
+      };
+    });
+  </script>
+</body>
+</html>

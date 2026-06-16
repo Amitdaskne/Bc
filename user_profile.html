@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Bhikharam Chandmal Agent Profile</title>
+  <!-- Google Fonts Poppins -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Tailwind CSS Play CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#7d0000',
+            secondary: '#ffd54a',
+            bgsoft: '#f7f4ec',
+          },
+          fontFamily: {
+            sans: ['Poppins', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-bgsoft font-sans min-h-screen text-slate-800 pb-24">
+
+  <!-- Sticky Header -->
+  <header class="sticky top-0 z-40 bg-primary text-white border-b-4 border-secondary shadow-md px-4 py-3 flex items-center justify-between font-sans">
+    <div class="flex items-center gap-2">
+      <a href="user_dashboard.html" class="w-9 h-9 hover:bg-black/20 rounded-xl flex items-center justify-center transition">
+        <i data-lucide="chevron-left" class="text-secondary w-6 h-6"></i>
+      </a>
+      <div>
+        <h1 class="text-sm font-bold tracking-wider leading-tight">MY PROFILE</h1>
+        <p class="text-[10px] font-semibold text-secondary tracking-widest uppercase">Sales Portal</p>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-md mx-auto p-4 space-y-5 animate-fade-in">
+    <!-- User Profile Details Card -->
+    <div class="bg-white rounded-3xl p-6 border border-rose-950/5 shadow-xl relative overflow-hidden text-center space-y-4">
+      <div class="absolute -top-10 -right-10 w-28 h-28 bg-[#ffd54a]/15 rounded-full blur-xl"></div>
+      <div class="absolute -bottom-10 -left-10 w-28 h-28 bg-[#7d0000]/5 rounded-full blur-xl"></div>
+
+      <!-- Avatar Photo and Cloudinary Uploader -->
+      <div class="flex flex-col items-center gap-2 relative">
+        <div class="relative w-24 h-24 rounded-full border-4 border-slate-100 overflow-hidden bg-slate-50 flex items-center justify-center shadow-md">
+          <img id="profile-dp" class="w-full h-full object-cover hidden" alt="Agent DP">
+          <i data-lucide="user" id="profile-placeholder" class="text-slate-400 w-12 h-12"></i>
+          
+          <div id="uploading-overlay" class="absolute inset-0 bg-black/60 flex items-center justify-center hidden">
+            <div class="animate-spin rounded-full h-6 w-6 border-2 border-white border-t-transparent"></div>
+          </div>
+        </div>
+        
+        <label class="cursor-pointer bg-[#7d0000]/5 hover:bg-primary/10 text-primary rounded-xl px-3.5 py-1 text-[11px] font-bold select-none border border-primary/10 transition mt-1">
+          <span>Change Photo</span>
+          <input type="file" id="profile-file-input" accept="image/*" class="hidden">
+        </label>
+      </div>
+
+      <!-- Profile Username block -->
+      <div class="space-y-1 select-none">
+        <h2 id="agent-fullname" class="text-base font-black text-slate-800 tracking-wide">...</h2>
+        <div class="inline-block mt-0.5 px-3 py-0.5 bg-emerald-50 text-emerald-800 border border-emerald-100 rounded-full text-[10px] font-bold uppercase tracking-wider">
+          Active Account
+        </div>
+      </div>
+
+      <!-- Detailed Info block -->
+      <div class="border-t border-dashed border-slate-200 pt-4 text-left space-y-3.5 text-xs text-slate-600">
+        <!-- Username segment -->
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 rounded-xl bg-slate-50 border flex items-center justify-center text-slate-400 shrink-0">
+            <i data-lucide="at-sign" class="w-4 h-4"></i>
+          </div>
+          <div>
+            <div class="text-[9px] text-slate-400 font-bold uppercase tracking-wider leading-none">System Username</div>
+            <div id="agent-username" class="font-bold text-slate-700 mt-1">...</div>
+          </div>
+        </div>
+
+        <!-- Mobile segment -->
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 rounded-xl bg-slate-50 border flex items-center justify-center text-slate-400 shrink-0">
+            <i data-lucide="phone" class="w-4 h-4"></i>
+          </div>
+          <div>
+            <div class="text-[9px] text-slate-400 font-bold uppercase tracking-wider leading-none">Registered Contact Mobile</div>
+            <div id="agent-mobile" class="font-bold text-slate-700 mt-1">...</div>
+          </div>
+        </div>
+
+        <!-- Date Created segment -->
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 rounded-xl bg-slate-50 border flex items-center justify-center text-slate-400 shrink-0">
+            <i data-lucide="calendar" class="w-4 h-4"></i>
+          </div>
+          <div>
+            <div class="text-[9px] text-slate-400 font-bold uppercase tracking-wider leading-none">Profile Created At</div>
+            <div id="agent-date" class="font-bold text-slate-700 mt-1">...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Actions Panel: Logout -->
+    <div class="p-1">
+      <button 
+        id="logout-btn" 
+        class="w-full bg-slate-100 border border-slate-200 hover:bg-slate-200 hover:text-rose-700 active:scale-[0.98] text-slate-700 font-bold text-xs py-3.5 px-4 rounded-2xl flex items-center justify-center gap-2 transition"
+      >
+        <i data-lucide="log-out" class="w-4.5 h-4.5"></i>
+        <span>Logout from Booking Agent Portal</span>
+      </button>
+    </div>
+  </main>
+
+  <!-- Bottom Navigation tab bar -->
+  <nav class="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-rose-950/5 shadow-lg max-w-md mx-auto flex items-center justify-around py-2 px-1">
+    <a href="user_dashboard.html" class="flex flex-col items-center text-slate-400 hover:text-primary transition py-1">
+      <i data-lucide="home" class="w-5 h-5"></i>
+      <span class="text-[9px] font-semibold mt-0.5">Home</span>
+    </a>
+    <a href="user_orders.html" class="flex flex-col items-center text-slate-400 hover:text-primary transition py-1">
+      <i data-lucide="receipt" class="w-5 h-5"></i>
+      <span class="text-[9px] font-semibold mt-0.5">History</span>
+    </a>
+    <a href="user_profile.html" class="flex flex-col items-center text-primary transition py-1">
+      <i data-lucide="user" class="w-5 h-5"></i>
+      <span class="text-[9px] font-bold mt-0.5">Profile</span>
+    </a>
+  </nav>
+
+  <!-- Script logic -->
+  <script type="module">
+    import { 
+      db, 
+      ref, 
+      get, 
+      update, 
+      DB_ROOT, 
+      checkUserSession, 
+      showToast, 
+      uploadImageToCloudinary,
+      logoutUser 
+    } from "./firebase-config.js";
+
+    let verifiedUser = null;
+
+    document.addEventListener("DOMContentLoaded", async () => {
+      lucide.createIcons();
+
+      // Session Verification
+      verifiedUser = await checkUserSession();
+      if (!verifiedUser) {
+        window.location.href = "user_login.html";
+        return;
+      }
+
+      // DOM items bindings
+      const profileDp = document.getElementById("profile-dp");
+      const profilePlaceholder = document.getElementById("profile-placeholder");
+      const uploadingOverlay = document.getElementById("uploading-overlay");
+      const fileInput = document.getElementById("profile-file-input");
+      
+      const agentFullname = document.getElementById("agent-fullname");
+      const agentUsername = document.getElementById("agent-username");
+      const agentMobile = document.getElementById("agent-mobile");
+      const agentDate = document.getElementById("agent-date");
+      const logoutBtn = document.getElementById("logout-btn");
+
+      // 1. Fetch real time profile details from DB
+      try {
+        const uSnap = await get(ref(db, `${DB_ROOT}/users/${verifiedUser.userId}`));
+        
+        if (uSnap.exists()) {
+          const uObj = uSnap.val();
+          
+          agentFullname.innerText = uObj.name || verifiedUser.name;
+          agentUsername.innerText = `@${uObj.username || verifiedUser.username}`;
+          agentMobile.innerText = uObj.mobile || "Not Provided";
+          
+          if (uObj.createdAt) {
+            agentDate.innerText = new Date(uObj.createdAt).toLocaleDateString("en-IN", {
+              day: "numeric",
+              month: "long",
+              year: "numeric"
+            });
+          } else {
+            agentDate.innerText = "System Origin Record";
+          }
+
+          // DP Check
+          if (uObj.dpUrl) {
+            profileDp.src = uObj.dpUrl;
+            profileDp.classList.remove("hidden");
+            profilePlaceholder.classList.add("hidden");
+          }
+        } else {
+          showToast("Profile fetch error. No matches.", "error");
+        }
+      } catch (err) {
+        console.error("Profile load error: ", err);
+      }
+
+      // 2. Cloudinary Upload trigger
+      fileInput.onchange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        uploadingOverlay.classList.remove("hidden");
+        try {
+          const uploadedUrl = await uploadImageToCloudinary(file);
+          
+          // Write back new dpUrl value to current user database node
+          const userRecordRef = ref(db, `${DB_ROOT}/users/${verifiedUser.userId}`);
+          await update(userRecordRef, { dpUrl: uploadedUrl });
+
+          profileDp.src = uploadedUrl;
+          profileDp.classList.remove("hidden");
+          profilePlaceholder.classList.add("hidden");
+          showToast("Profile photo changed successfully!", "success");
+        } catch (error) {
+          showToast("Failed to upload profile picture: " + error.message, "error");
+        } finally {
+          uploadingOverlay.classList.add("hidden");
+        }
+      };
+
+      // Logout handler
+      logoutBtn.onclick = () => {
+        logoutUser();
+      };
+    });
+  </script>
+</body>
+</html>

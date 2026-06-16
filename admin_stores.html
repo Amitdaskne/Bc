@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Bhikharam Chandmal Admin Stores</title>
+  <!-- Google Fonts Poppins -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Tailwind CSS Play CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#7d0000',
+            secondary: '#ffd54a',
+            bgsoft: '#f7f4ec',
+          },
+          fontFamily: {
+            sans: ['Poppins', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-bgsoft font-sans min-h-screen text-slate-800 pb-24">
+
+  <!-- Sticky Header -->
+  <header class="sticky top-0 z-40 bg-primary text-white border-b-4 border-secondary shadow-md px-4 py-3 flex items-center justify-between font-sans">
+    <div class="flex items-center gap-2">
+      <a href="admin_dashboard.html" class="w-9 h-9 hover:bg-black/20 rounded-xl flex items-center justify-center transition">
+        <i data-lucide="chevron-left" class="text-secondary w-6 h-6"></i>
+      </a>
+      <div>
+        <h1 class="text-sm font-bold tracking-wider leading-tight">MANAGE STORES</h1>
+        <p class="text-[10px] font-semibold text-secondary tracking-widest uppercase">Admin Operations</p>
+      </div>
+    </div>
+    <button 
+      id="open-add-dialog" 
+      class="bg-secondary text-primary font-bold hover:bg-yellow-400 active:scale-[0.97] rounded-xl text-xs px-3 py-2 flex items-center gap-1.5 shadow"
+    >
+      <i data-lucide="plus-circle" class="w-4 h-4"></i>
+      <span>Add Store</span>
+    </button>
+  </header>
+
+  <main class="max-w-md mx-auto p-4 space-y-4">
+    <!-- Search Bar -->
+    <div class="relative">
+      <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+        <i data-lucide="search" class="text-slate-400 w-5 h-5"></i>
+      </span>
+      <input 
+        type="text" 
+        id="search-input" 
+        placeholder="Search stores by name, contact, phone..." 
+        class="w-full pl-10 pr-10 py-3 bg-white border border-rose-950/5 rounded-2xl text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-xs transition"
+      >
+      <button 
+        id="clear-search" 
+        class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600 hidden"
+      >
+        <i data-lucide="x" class="w-4 h-4"></i>
+      </button>
+    </div>
+
+    <!-- Active Stores Count -->
+    <div class="flex justify-between items-center text-xs text-slate-500 font-semibold uppercase tracking-wider px-1">
+      <span>Stores Directory</span>
+      <span id="store-count-badge" class="bg-primary/5 text-primary px-2.5 py-0.5 rounded-full">0 Stores</span>
+    </div>
+
+    <!-- Loader placeholder -->
+    <div id="stores-spinner" class="py-12 flex justify-center">
+      <div class="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent"></div>
+    </div>
+
+    <!-- Stores Container list -->
+    <div id="stores-list" class="space-y-4">
+      <!-- Injected store cards go here -->
+    </div>
+
+    <!-- Empty State -->
+    <div id="empty-state" class="hidden text-center py-12 bg-white rounded-3xl p-6 border border-rose-950/5">
+      <div class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-3">
+        <i data-lucide="store" class="text-slate-400 w-8 h-8"></i>
+      </div>
+      <p class="font-bold text-slate-700 text-sm">No stores registered</p>
+      <p class="text-xs text-slate-400 mt-1">Add your first partner store location to get started.</p>
+    </div>
+  </main>
+
+  <!-- POPUP: Create / Edit Store Modal Dialog -->
+  <div id="store-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-3xl shadow-xl w-full max-w-sm max-h-[90vh] overflow-y-auto transform transition scale-95 duration-200">
+      
+      <!-- Modal Header -->
+      <div class="bg-primary px-6 py-4 flex items-center justify-between text-white border-b border-rose-950/10">
+        <h3 id="modal-title" class="font-bold text-base tracking-wide">Add Store</h3>
+        <button id="close-modal" class="w-8 h-8 hover:bg-black/10 rounded-lg flex items-center justify-center transition">
+          <i data-lucide="x" class="text-white w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <form id="store-form" class="p-6 space-y-4">
+        <input type="hidden" id="form-store-id">
+
+        <!-- Store Image Upload Field -->
+        <div class="flex flex-col items-center gap-3">
+          <div class="relative w-full h-32 rounded-2xl border-2 border-slate-200 overflow-hidden bg-slate-100 flex items-center justify-center">
+            <img id="form-image-preview" class="w-full h-full object-cover hidden" alt="Store Image">
+            <div id="form-image-placeholder" class="text-center">
+              <i data-lucide="store" class="text-slate-400 w-10 h-10 mx-auto"></i>
+              <span class="text-[10px] text-slate-400 font-semibold uppercase mt-1 block">Store Photo</span>
+            </div>
+            <div id="uploading-overlay" class="absolute inset-0 bg-black/60 flex items-center justify-center hidden">
+              <div class="animate-spin rounded-full h-6 w-6 border-2 border-white border-t-transparent"></div>
+            </div>
+          </div>
+          <label class="cursor-pointer bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl px-4 py-1.5 text-xs font-semibold select-none border border-slate-200 transition">
+            <span>Upload Store Photo</span>
+            <input type="file" id="form-file-input" accept="image/*" class="hidden">
+          </label>
+          <input type="hidden" id="form-image-url" value="">
+        </div>
+
+        <!-- Store Name Field -->
+        <div>
+          <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Store Name</label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 flex items-center pl-3">
+              <i data-lucide="store" class="text-slate-400 w-4.5 h-4.5"></i>
+            </span>
+            <input 
+              type="text" 
+              id="form-name" 
+              placeholder="e.g. Bhikharam Chandmal - Bikaner Hub" 
+              required
+              class="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-xs focus:ring-2 focus:ring-primary/20 outline-none transition"
+            >
+          </div>
+        </div>
+
+        <!-- Contact Person Field -->
+        <div>
+          <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Contact Person Name</label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 flex items-center pl-3">
+              <i data-lucide="user" class="text-slate-400 w-4.5 h-4.5"></i>
+            </span>
+            <input 
+              type="text" 
+              id="form-contact" 
+              placeholder="e.g. Anil Sethi" 
+              required
+              class="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-xs focus:ring-2 focus:ring-primary/20 outline-none transition"
+            >
+          </div>
+        </div>
+
+        <!-- Mobile Number Field -->
+        <div>
+          <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Store Contact Mobile</label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 flex items-center pl-3">
+              <i data-lucide="phone" class="text-slate-400 w-4.5 h-4.5"></i>
+            </span>
+            <input 
+              type="tel" 
+              id="form-mobile" 
+              placeholder="e.g. 9831000000" 
+              required
+              class="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-xs focus:ring-2 focus:ring-primary/20 outline-none transition"
+            >
+          </div>
+        </div>
+
+        <!-- Email Address Field -->
+        <div>
+          <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Store Email Address</label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 flex items-center pl-3">
+              <i data-lucide="mail" class="text-slate-400 w-4.5 h-4.5"></i>
+            </span>
+            <input 
+              type="email" 
+              id="form-email" 
+              placeholder="e.g. sethistores@gmail.com" 
+              required
+              class="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-xs focus:ring-2 focus:ring-primary/20 outline-none transition"
+            >
+          </div>
+        </div>
+
+        <!-- Address Text Field -->
+        <div>
+          <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Store Physical Address</label>
+          <div class="relative">
+            <span class="absolute top-3 left-3">
+              <i data-lucide="map-pin" class="text-slate-400 w-4.5 h-4.5"></i>
+            </span>
+            <textarea 
+              id="form-address" 
+              placeholder="Full physical address, land mark, city, pin code..." 
+              required
+              rows="3"
+              class="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-xs focus:ring-2 focus:ring-primary/20 outline-none transition resize-none"
+            ></textarea>
+          </div>
+        </div>
+
+        <!-- Submit Button -->
+        <button 
+          type="submit" 
+          id="form-submit-btn" 
+          class="w-full bg-primary hover:bg-rose-950 active:scale-[0.97] text-white py-3 px-4 rounded-xl font-bold text-xs shadow-md transition flex items-center justify-center gap-1.5 pt-2.5 pb-2.5"
+        >
+          <i data-lucide="save" class="w-4 h-4"></i>
+          <span>Save Store Details</span>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Bottom navigation -->
+  <nav class="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-rose-950/5 shadow-lg max-w-md mx-auto flex items-center justify-around py-2 px-1">
+    <a href="admin_dashboard.html" class="flex flex-col items-center text-slate-400 hover:text-primary transition py-1">
+      <i data-lucide="home" class="w-5 h-5"></i>
+      <span class="text-[9px] font-semibold mt-0.5">Home</span>
+    </a>
+    <a href="admin_users.html" class="flex flex-col items-center text-slate-400 hover:text-primary transition py-1">
+      <i data-lucide="users" class="w-5 h-5"></i>
+      <span class="text-[9px] font-semibold mt-0.5">Users</span>
+    </a>
+    <a href="admin_stores.html" class="flex flex-col items-center text-primary transition py-1">
+      <i data-lucide="store" class="w-5 h-5"></i>
+      <span class="text-[9px] font-bold mt-0.5">Stores</span>
+    </a>
+    <a href="admin_products.html" class="flex flex-col items-center text-slate-400 hover:text-primary transition py-1">
+      <i data-lucide="package" class="w-5 h-5"></i>
+      <span class="text-[9px] font-semibold mt-0.5">Products</span>
+    </a>
+    <a href="admin_orders.html" class="flex flex-col items-center text-slate-400 hover:text-primary transition py-1">
+      <i data-lucide="shopping-bag" class="w-5 h-5"></i>
+      <span class="text-[9px] font-semibold mt-0.5">Orders</span>
+    </a>
+  </nav>
+
+  <!-- Script logic -->
+  <script type="module">
+    import { 
+      db, 
+      ref, 
+      set, 
+      get, 
+      update, 
+      remove, 
+      onValue, 
+      DB_ROOT, 
+      checkAdminSession, 
+      showToast, 
+      uploadImageToCloudinary 
+    } from "./firebase-config.js";
+
+    let allStores = {};
+    let activeSearchText = "";
+
+    document.addEventListener("DOMContentLoaded", async () => {
+      lucide.createIcons();
+
+      // Check Administrative Session
+      const verified = await checkAdminSession();
+      if (!verified) {
+        window.location.href = "admin_login.html";
+        return;
+      }
+
+      // Dialog controls
+      const addBtn = document.getElementById("open-add-dialog");
+      const storeModal = document.getElementById("store-modal");
+      const closeModal = document.getElementById("close-modal");
+      const storeForm = document.getElementById("store-form");
+      const modalTitle = document.getElementById("modal-title");
+      
+      const formStoreId = document.getElementById("form-store-id");
+      const formName = document.getElementById("form-name");
+      const formContact = document.getElementById("form-contact");
+      const formMobile = document.getElementById("form-mobile");
+      const formEmail = document.getElementById("form-email");
+      const formAddress = document.getElementById("form-address");
+      const formImageUrl = document.getElementById("form-image-url");
+      const fileInput = document.getElementById("form-file-input");
+      
+      const formImagePreview = document.getElementById("form-image-preview");
+      const formImagePlaceholder = document.getElementById("form-image-placeholder");
+      const uploadingOverlay = document.getElementById("uploading-overlay");
+
+      // Search & Listing Controls
+      const searchInput = document.getElementById("search-input");
+      const clearSearchBtn = document.getElementById("clear-search");
+      const storesList = document.getElementById("stores-list");
+      const emptyState = document.getElementById("empty-state");
+      const storeCountBadge = document.getElementById("store-count-badge");
+      const storesSpinner = document.getElementById("stores-spinner");
+
+      // Setup RTDB Sync Listener
+      const storesRef = ref(db, `${DB_ROOT}/stores`);
+      onValue(storesRef, (snapshot) => {
+        storesSpinner.classList.add("hidden");
+        if (snapshot.exists()) {
+          allStores = snapshot.val();
+        } else {
+          allStores = {};
+        }
+        renderStores();
+      }, (error) => {
+        console.error(error);
+        showToast("Failed to fetch stores: " + error.message, "error");
+        storesSpinner.classList.add("hidden");
+      });
+
+      // Render stores function
+      function renderStores() {
+        storesList.innerHTML = "";
+        const sList = Object.entries(allStores);
+        
+        let filtered = sList;
+        if (activeSearchText) {
+          filtered = sList.filter(([id, s]) => {
+            const nameMatch = s.name && s.name.toLowerCase().includes(activeSearchText.toLowerCase());
+            const contactMatch = s.contactPerson && s.contactPerson.toLowerCase().includes(activeSearchText.toLowerCase());
+            const mobileMatch = s.mobile && s.mobile.includes(activeSearchText);
+            return nameMatch || contactMatch || mobileMatch;
+          });
+        }
+
+        storeCountBadge.innerText = `${filtered.length} Stores`;
+
+        if (filtered.length === 0) {
+          emptyState.classList.remove("hidden");
+          return;
+        }
+
+        emptyState.classList.add("hidden");
+
+        // Sort by store name
+        filtered.sort((a,b) => (a[1].name || "").localeCompare(b[1].name || ""));
+
+        filtered.forEach(([storeId, store]) => {
+          const storeCard = document.createElement("div");
+          storeCard.className = "bg-white rounded-2xl border border-rose-950/5 shadow-xs overflow-hidden flex flex-col transition hover:shadow-sm";
+          
+          const defaultImgHtml = store.imageUrl
+            ? `<img src="${store.imageUrl}" class="w-full h-32 object-cover" alt="Store banner">`
+            : `
+              <div class="w-full h-32 bg-amber-50 border-b border-rose-950/5 flex flex-col items-center justify-center gap-1">
+                <i data-lucide="store" class="text-primary/45 w-10 h-10"></i>
+                <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">No Store Banner</span>
+              </div>
+            `;
+
+          storeCard.innerHTML = `
+            ${defaultImgHtml}
+            
+            <div class="p-4 space-y-3">
+              <div>
+                <h4 class="font-bold text-slate-800 text-sm tracking-wide leading-tight">${store.name}</h4>
+                <div class="flex items-center gap-1.5 text-[11px] text-slate-500 mt-1.5">
+                  <i data-lucide="user-check" class="w-3.5 h-3.5 text-slate-400"></i>
+                  <span>Contact: <strong>${store.contactPerson || "N/A"}</strong></span>
+                </div>
+              </div>
+
+              <!-- Info details -->
+              <div class="grid grid-cols-1 gap-1.5 bg-slate-50 rounded-xl p-2.5 text-[11px] text-slate-600 border border-slate-100">
+                <div class="flex items-center gap-1.5">
+                  <i data-lucide="phone" class="w-3.5 h-3.5 text-slate-400 shrink-0"></i>
+                  <span>${store.mobile || "No Phone"}</span>
+                </div>
+                <div class="flex items-center gap-1.5">
+                  <i data-lucide="mail" class="w-3.5 h-3.5 text-slate-400 shrink-0"></i>
+                  <span class="truncate">${store.email || "No Email"}</span>
+                </div>
+                <div class="flex items-start gap-1.5">
+                  <i data-lucide="map-pin" class="w-3.5 h-3.5 text-primary shrink-0 mt-0.5"></i>
+                  <span>${store.address || "No Address Added"}</span>
+                </div>
+              </div>
+
+              <!-- Options -->
+              <div class="flex items-center justify-end gap-2 pt-1 border-t border-slate-100">
+                <button class="edit-btn font-bold text-[11px] text-primary hover:bg-rose-50 border border-rose-100 rounded-xl px-3 py-1.5 flex items-center gap-1 transition" data-id="${storeId}">
+                  <i data-lucide="pencil" class="w-3 h-3"></i>
+                  <span>Edit</span>
+                </button>
+                <button class="delete-btn font-bold text-[11px] text-rose-600 hover:bg-rose-50 border border-rose-100 rounded-xl px-3 py-1.5 flex items-center gap-1 transition" data-id="${storeId}">
+                  <i data-lucide="trash-2" class="w-3 h-3"></i>
+                  <span>Delete</span>
+                </button>
+              </div>
+            </div>
+          `;
+
+          storesList.appendChild(storeCard);
+        });
+
+        lucide.createIcons();
+
+        // Attach buttons handlers
+        document.querySelectorAll(".edit-btn").forEach(btn => {
+          btn.onclick = (e) => {
+            const sid = e.currentTarget.getAttribute("data-id");
+            openEditModal(sid);
+          };
+        });
+
+        document.querySelectorAll(".delete-btn").forEach(btn => {
+          btn.onclick = async (e) => {
+            const sid = e.currentTarget.getAttribute("data-id");
+            if (confirm("Are you sure you want to delete this store location? It will break active products and user assignments associated with it.")) {
+              try {
+                storesSpinner.classList.remove("hidden");
+                
+                // Fetch assignments to purge assignments tied to this store
+                const usersRef = ref(db, `${DB_ROOT}/assignments`);
+                const snapshot = await get(usersRef);
+                if (snapshot.exists()) {
+                  const assignments = snapshot.val();
+                  for (const uid in assignments) {
+                    if (assignments[uid] && assignments[uid][sid]) {
+                      await remove(ref(db, `${DB_ROOT}/assignments/${uid}/${sid}`));
+                    }
+                  }
+                }
+                
+                // Products are universal: do not delete products when deleting a store.
+
+                // Delete store block
+                await remove(ref(db, `${DB_ROOT}/stores/${sid}`));
+                showToast("Store and related associations removed", "success");
+              } catch (err) {
+                showToast("Failed to delete store: " + err.message, "error");
+              } finally {
+                storesSpinner.classList.add("hidden");
+              }
+            }
+          };
+        });
+      }
+
+      // Dialog Close/Open Helpers
+      addBtn.onclick = () => {
+        resetForm();
+        modalTitle.innerText = "Add Store";
+        storeModal.classList.remove("hidden");
+        document.body.classList.add("overflow-hidden");
+      };
+
+      closeModal.onclick = () => {
+        storeModal.classList.add("hidden");
+        document.body.classList.remove("overflow-hidden");
+      };
+
+      // Reset form variables
+      function resetForm() {
+        storeForm.reset();
+        formStoreId.value = "";
+        formImageUrl.value = "";
+        formImagePreview.src = "";
+        formImagePreview.classList.add("hidden");
+        formImagePlaceholder.classList.remove("hidden");
+      }
+
+      // Handle File Upload to Cloudinary
+      fileInput.onchange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        uploadingOverlay.classList.remove("hidden");
+        try {
+          const uploadedUrl = await uploadImageToCloudinary(file);
+          formImageUrl.value = uploadedUrl;
+          formImagePreview.src = uploadedUrl;
+          formImagePreview.classList.remove("hidden");
+          formImagePlaceholder.classList.add("hidden");
+          showToast("Store image uploaded successfully!", "success");
+        } catch (error) {
+          showToast("Failed to upload store image: " + error.message, "error");
+        } finally {
+          uploadingOverlay.classList.add("hidden");
+        }
+      };
+
+      // Open in edit mode
+      function openEditModal(sid) {
+        const store = allStores[sid];
+        if (!store) return;
+
+        resetForm();
+        modalTitle.innerText = "Edit Store";
+        formStoreId.value = sid;
+        formName.value = store.name || "";
+        formContact.value = store.contactPerson || "";
+        formMobile.value = store.mobile || "";
+        formEmail.value = store.email || "";
+        formAddress.value = store.address || "";
+        formImageUrl.value = store.imageUrl || "";
+
+        if (store.imageUrl) {
+          formImagePreview.src = store.imageUrl;
+          formImagePreview.classList.remove("hidden");
+          formImagePlaceholder.classList.add("hidden");
+        }
+
+        storeModal.classList.remove("hidden");
+        document.body.classList.add("overflow-hidden");
+      }
+
+      // Form submission
+      storeForm.onsubmit = async (e) => {
+        e.preventDefault();
+
+        const sid = formStoreId.value;
+        const name = formName.value.trim();
+        const contactPerson = formContact.value.trim();
+        const mobile = formMobile.value.trim();
+        const email = formEmail.value.trim();
+        const address = formAddress.value.trim();
+        const imageUrl = formImageUrl.value;
+
+        storesSpinner.classList.remove("hidden");
+        storeModal.classList.add("hidden");
+        document.body.classList.remove("overflow-hidden");
+
+        try {
+          if (sid) {
+            // Edit existing
+            const storeRef = ref(db, `${DB_ROOT}/stores/${sid}`);
+            await update(storeRef, {
+              name,
+              contactPerson,
+              mobile,
+              email,
+              address,
+              imageUrl
+            });
+            showToast("Store details updated successfully", "success");
+          } else {
+            // Create new
+            const newId = "store_" + Date.now();
+            const storeRef = ref(db, `${DB_ROOT}/stores/${newId}`);
+            await set(storeRef, {
+              name,
+              contactPerson,
+              mobile,
+              email,
+              address,
+              imageUrl,
+              createdAt: Date.now()
+            });
+            showToast("Store registered successfully in directory", "success");
+          }
+        } catch (error) {
+          showToast("Database Save Error: " + error.message, "error");
+        } finally {
+          storesSpinner.classList.add("hidden");
+        }
+      };
+
+      // Search filters
+      searchInput.oninput = (e) => {
+        activeSearchText = e.target.value;
+        if (activeSearchText) {
+          clearSearchBtn.classList.remove("hidden");
+        } else {
+          clearSearchBtn.classList.add("hidden");
+        }
+        renderStores();
+      };
+
+      clearSearchBtn.onclick = () => {
+        searchInput.value = "";
+        activeSearchText = "";
+        clearSearchBtn.classList.add("hidden");
+        renderStores();
+      };
+    });
+  </script>
+</body>
+</html>

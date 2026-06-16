@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Bhikharam Chandmal Checkout</title>
+  <!-- Google Fonts Poppins -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Tailwind CSS Play CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#7d0000',
+            secondary: '#ffd54a',
+            bgsoft: '#f7f4ec',
+          },
+          fontFamily: {
+            sans: ['Poppins', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-bgsoft font-sans min-h-screen text-slate-800 pb-24">
+
+  <!-- Sticky Header -->
+  <header class="sticky top-0 z-40 bg-primary text-white border-b-4 border-secondary shadow-md px-4 py-3 flex items-center justify-between font-sans">
+    <div class="flex items-center gap-2">
+      <button id="back-btn" class="w-9 h-9 hover:bg-black/20 rounded-xl flex items-center justify-center transition">
+        <i data-lucide="chevron-left" class="text-secondary w-6 h-6"></i>
+      </button>
+      <div>
+        <h1 class="text-sm font-bold tracking-wider leading-tight">ORDER CHECKOUT</h1>
+        <p class="text-[9px] uppercase font-semibold text-secondary tracking-widest leading-none mt-0.5">Booking Completion</p>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-md mx-auto p-4 space-y-4 animate-fade-in">
+    <!-- Store delivery details card -->
+    <div class="bg-white rounded-3xl p-5 border border-rose-950/5 shadow-xs space-y-3">
+      <div class="flex items-center gap-1.5 text-xs font-bold text-slate-400 uppercase tracking-widest px-1">
+        <i data-lucide="store" class="w-4 h-4 text-primary"></i>
+        <span>Target Store Details</span>
+      </div>
+      
+      <div class="border-t border-slate-100 pt-2.5 space-y-2">
+        <h3 id="store-name-label" class="font-extrabold text-slate-800 text-sm">Loading Store...</h3>
+        
+        <div class="grid grid-cols-1 gap-1.5 text-xs text-slate-600 bg-slate-50 border border-slate-100 p-3 rounded-2xl">
+          <div class="flex items-center gap-2">
+            <i data-lucide="user-check" class="w-4 h-4 text-slate-400"></i>
+            <span>In-Charge: <strong id="store-contact-person" class="text-slate-700">...</strong></span>
+          </div>
+          <div class="flex items-center gap-2">
+            <i data-lucide="phone" class="w-4 h-4 text-slate-400"></i>
+            <span id="store-phone-number" class="font-semibold text-slate-700">...</span>
+          </div>
+          <div class="flex items-start gap-2">
+            <i data-lucide="map-pin" class="w-4 h-4 text-primary shrink-0 mt-0.5"></i>
+            <span id="store-address-box" class="leading-relaxed">...</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Order Items checklist Summary -->
+    <div class="bg-white rounded-3xl p-5 border border-rose-950/5 shadow-xs space-y-3">
+      <div class="flex items-center gap-1.5 text-xs font-bold text-slate-400 uppercase tracking-widest px-1">
+        <i data-lucide="receipt" class="w-4 h-4 text-primary"></i>
+        <span>Order Summary</span>
+      </div>
+
+      <!-- list check -->
+      <div id="checkout-items-list" class="border-t border-slate-100 pt-2 space-y-1.5">
+        <!-- dyn items filled -->
+      </div>
+
+      <!-- total rows -->
+      <div class="border-t border-dashed border-slate-200 pt-3 flex items-center justify-between">
+        <div>
+          <div class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Total Quantity</div>
+          <div id="checkout-total-qty" class="text-sm font-bold text-slate-700 mt-0.5">0 Items</div>
+        </div>
+        <div class="text-right">
+          <div class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Amount Payable</div>
+          <div id="checkout-grand-total" class="text-base font-black text-primary mt-0.5">₹0.00</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Booking form details -->
+    <div class="bg-white rounded-3xl p-5 border border-rose-950/5 shadow-xs space-y-4">
+      <div>
+        <h3 class="text-xs font-extrabold text-slate-400 uppercase tracking-widest mb-1">Additional Booking Info</h3>
+        <p class="text-[10px] text-slate-400">Add advanced payment details and instructions regarding dispatch timing.</p>
+      </div>
+
+      <!-- Advance Payment Input -->
+      <div class="space-y-1.5 border-t border-slate-100 pt-3">
+        <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest">Advance Amount Paid (₹)</label>
+        <div class="relative">
+          <span class="absolute inset-y-0 left-0 flex items-center pl-3">
+            <i data-lucide="banknote" class="text-slate-400 w-4.5 h-4.5"></i>
+          </span>
+          <input 
+            type="number" 
+            id="advance-amount" 
+            value="0" 
+            min="0"
+            step="any"
+            required
+            placeholder="Enter advance amount paid (can be 0)..." 
+            class="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs text-slate-800 focus:ring-2 focus:ring-primary/20 outline-none transition"
+          />
+        </div>
+        <p class="text-[10px] text-slate-400 italic">Enter 0 if no advance payment is captured atbooking.</p>
+      </div>
+
+      <!-- Notes -->
+      <div class="space-y-1.5 border-t border-slate-100 pt-3">
+        <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest">Order Notes / Instructions</label>
+        <div class="relative">
+          <span class="absolute top-3 left-3">
+            <i data-lucide="sticky-note" class="text-slate-400 w-4.5 h-4.5"></i>
+          </span>
+          <textarea 
+            id="order-notes" 
+            placeholder="Add delivery instructions, priority billing notes or dispatch comments..." 
+            rows="3"
+            class="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs text-slate-800 focus:ring-2 focus:ring-primary/20 outline-none transition resize-none"
+          ></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- Confirm booking button -->
+    <div class="p-2">
+      <button 
+        id="confirm-booking-btn" 
+        class="w-full bg-primary hover:bg-rose-950 text-white font-extrabold text-xs py-4 px-4 rounded-2xl flex items-center justify-center gap-2 transition active:scale-[0.98] shadow-lg leading-none"
+      >
+        <i data-lucide="check-circle" class="w-5 h-5 text-secondary"></i>
+        <span>CONFIRM & BOOK ORDER</span>
+      </button>
+    </div>
+  </main>
+
+  <!-- Script logic -->
+  <script type="module">
+    import { 
+      db, 
+      ref, 
+      get, 
+      set, 
+      remove, 
+      update, 
+      runTransaction,
+      DB_ROOT, 
+      checkUserSession, 
+      showToast, 
+      showLoader, 
+      hideLoader 
+    } from "./firebase-config.js";
+
+    // Grab store parameter
+    const urlParams = new URLSearchParams(window.location.search);
+    const storeId = urlParams.get("storeId");
+
+    let verifiedUser = null;
+    let storeDetails = null;
+    let basketMap = {};
+    let checkoutSumTotal = 0;
+    let checkoutQtyTotal = 0;
+
+    document.addEventListener("DOMContentLoaded", async () => {
+      lucide.createIcons();
+
+      // Check parameters
+      if (!storeId) {
+        window.location.href = "user_dashboard.html";
+        return;
+      }
+
+      // Check user session
+      verifiedUser = await checkUserSession();
+      if (!verifiedUser) {
+        window.location.href = "user_login.html";
+        return;
+      }
+
+      // DOM bindings
+      const backBtn = document.getElementById("back-btn");
+      const storeNameLabel = document.getElementById("store-name-label");
+      const storeContactPerson = document.getElementById("store-contact-person");
+      const storePhone = document.getElementById("store-phone-number");
+      const storeAddressBox = document.getElementById("store-address-box");
+      
+      const checkoutItemsList = document.getElementById("checkout-items-list");
+      const checkoutTotalQty = document.getElementById("checkout-total-qty");
+      const checkoutGrandTotal = document.getElementById("checkout-grand-total");
+      const orderNotes = document.getElementById("order-notes");
+      const confirmBookingBtn = document.getElementById("confirm-booking-btn");
+
+      // Back navigation
+      backBtn.onclick = () => {
+        window.location.href = `user_products.html?storeId=${storeId}`;
+      };
+
+      // 1. Fetch store details immediately
+      showLoader();
+      try {
+        const storeSnap = await get(ref(db, `${DB_ROOT}/stores/${storeId}`));
+        if (storeSnap.exists()) {
+          storeDetails = storeSnap.val();
+          storeNameLabel.innerText = storeDetails.name;
+          storeContactPerson.innerText = storeDetails.contactPerson || "N/A";
+          storePhone.innerText = storeDetails.mobile || "No Mobile";
+          storeAddressBox.innerText = storeDetails.address || "No address compiled";
+        } else {
+          showToast("Checkout error: Store details not registered.", "error");
+          setTimeout(() => window.location.href = "user_dashboard.html", 1500);
+          return;
+        }
+
+        // 2. Fetch cart contents
+        const cartSnap = await get(ref(db, `${DB_ROOT}/carts/${verifiedUser.userId}`));
+        hideLoader();
+
+        if (cartSnap.exists()) {
+          basketMap = cartSnap.val();
+          renderCheckoutSummary();
+        } else {
+          showToast("Your checkout cart is empty! Add products first.", "amber");
+          setTimeout(() => {
+            window.location.href = `user_products.html?storeId=${storeId}`;
+          }, 1500);
+          return;
+        }
+
+      } catch (err) {
+        hideLoader();
+        console.error("Order load error: ", err);
+      }
+
+      // Render items checklist
+      function renderCheckoutSummary() {
+        checkoutItemsList.innerHTML = "";
+        checkoutSumTotal = 0;
+        checkoutQtyTotal = 0;
+
+        Object.entries(basketMap).forEach(([pid, item]) => {
+          const itemPrice = parseFloat(item.price || 0);
+          const itemQty = parseInt(item.qty || 0, 10);
+          const lineTotal = itemPrice * itemQty;
+
+          checkoutSumTotal += lineTotal;
+          checkoutQtyTotal += itemQty;
+
+          const row = document.createElement("div");
+          row.className = "flex items-start justify-between text-xs py-2.5 border-b border-dashed border-slate-100 flex-wrap";
+          row.innerHTML = `
+            <div class="flex-1 min-w-0 pr-2">
+              <h4 class="font-bold text-slate-800 leading-tight truncate">${item.name}</h4>
+              <p class="text-[10px] text-slate-400 mt-0.5">₹${itemPrice.toFixed(2)} &times; ${itemQty}</p>
+            </div>
+            <span class="font-extrabold text-slate-800 shrink-0">₹${lineTotal.toFixed(2)}</span>
+          `;
+          checkoutItemsList.appendChild(row);
+        });
+
+        checkoutTotalQty.innerText = `${checkoutQtyTotal} Items`;
+        checkoutGrandTotal.innerText = `₹${checkoutSumTotal.toFixed(2)}`;
+      }
+
+      // Handle Confirm and booking submission
+      confirmBookingBtn.onclick = async () => {
+        if (!storeDetails || Object.keys(basketMap).length === 0) {
+          showToast("Error processing checkout details. Reload page.", "error");
+          return;
+        }
+
+        const advanceAmountInput = document.getElementById("advance-amount");
+        const advanceVal = parseFloat(advanceAmountInput.value || 0);
+
+        if (isNaN(advanceVal) || advanceVal < 0) {
+          showToast("Please enter a valid advance payment amount (0 or positive).", "error");
+          return;
+        }
+
+        if (advanceVal > checkoutSumTotal) {
+          showToast(`Advance payment (₹${advanceVal}) cannot exceed Order Total (₹${checkoutSumTotal.toFixed(2)}).`, "error");
+          return;
+        }
+
+        showLoader();
+        try {
+          const notesText = orderNotes.value.trim();
+
+          // Initialize order ID
+          const orderId = "ORD_" + Date.now();
+
+          // Prepare order object matching the schema
+          const finalOrderObject = {
+            userId: verifiedUser.userId,
+            userName: verifiedUser.name || verifiedUser.username,
+            storeId: storeId,
+            storeName: storeDetails.name,
+            storeAddress: storeDetails.address || "",
+            storeMobile: storeDetails.mobile || "",
+            items: basketMap,
+            totalItems: checkoutQtyTotal,
+            grandTotal: parseFloat(parseFloat(checkoutSumTotal).toFixed(2)),
+            advanceAmount: parseFloat(advanceVal.toFixed(2)),
+            finalAmount: parseFloat((checkoutSumTotal - advanceVal).toFixed(2)),
+            notes: notesText,
+            status: "pending",
+            createdAt: Date.now()
+          };
+
+          // 1. Transaction check & update: we first verify stock is enough for each product inside the basket
+          const catalogRef = ref(db, `${DB_ROOT}/products`);
+          const productSnapshot = await get(catalogRef);
+
+          if (productSnapshot.exists()) {
+            const allProductsInDb = productSnapshot.val();
+            // Verify all items are in stock
+            for (const [pid, cartItem] of Object.entries(basketMap)) {
+              const dbProd = allProductsInDb[pid];
+              if (!dbProd) {
+                throw new Error(`Product "${cartItem.name}" no longer exists in system catalogs.`);
+              }
+              const currentStock = parseInt(dbProd.stock || 0, 10);
+              const requestedQty = parseInt(cartItem.qty || 0, 10);
+
+              if (requestedQty > currentStock) {
+                throw new Error(`Insufficient Stock: Only ${currentStock} units of "${cartItem.name}" are available in inventory.`);
+              }
+            }
+
+            // 2. Safely deduct product stock levels inside database
+            for (const [pid, cartItem] of Object.entries(basketMap)) {
+              const currentStock = parseInt(allProductsInDb[pid].stock || 0, 10);
+              const requestedQty = parseInt(cartItem.qty || 0, 10);
+              const remainingStock = currentStock - requestedQty;
+
+              // Write new stock value back
+              await update(ref(db, `${DB_ROOT}/products/${pid}`), { stock: remainingStock });
+            }
+          }
+
+          // 3. Write final Order object back
+          const orderRef = ref(db, `${DB_ROOT}/orders/${orderId}`);
+          await set(orderRef, finalOrderObject);
+
+          // 4. Wipe out standard shopping baskets
+          await remove(ref(db, `${DB_ROOT}/carts/${verifiedUser.userId}`));
+
+          showToast("Order booked successfully! Thank you.", "success");
+          setTimeout(() => {
+            window.location.href = "user_orders.html";
+          }, 1200);
+
+        } catch (error) {
+          console.error("Booking Error:", error);
+          showToast(error.message || "Failed to submit booking.", "error");
+        } finally {
+          hideLoader();
+        }
+      };
+    });
+  </script>
+</body>
+</html>

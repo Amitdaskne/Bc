@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Bhikharam Chandmal Bookings History</title>
+  <!-- Google Fonts Poppins -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Tailwind CSS Play CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#7d0000',
+            secondary: '#ffd54a',
+            bgsoft: '#f7f4ec',
+          },
+          fontFamily: {
+            sans: ['Poppins', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-bgsoft font-sans min-h-screen text-slate-800 pb-24">
+
+  <!-- Sticky Header -->
+  <header class="sticky top-0 z-40 bg-primary text-white border-b-4 border-secondary shadow-md px-4 py-3 flex items-center justify-between font-sans">
+    <div class="flex items-center gap-3">
+      <div id="user-header-dp" class="w-10 h-10 rounded-full border border-secondary bg-white/10 overflow-hidden flex items-center justify-center shrink-0">
+        <i data-lucide="user" class="text-secondary w-5 h-5"></i>
+      </div>
+      <div>
+        <h1 class="text-sm font-bold tracking-wide leading-tight">MY ORDER BOOKINGS</h1>
+        <p class="text-[9px] uppercase font-semibold text-secondary tracking-widest leading-none mt-0.5">Sales Agent Overview</p>
+      </div>
+    </div>
+    
+    <div class="flex items-[#ffd54a] gap-1 bg-[#ffd54a]/10 border border-[#ffd54a]/30 px-2.5 py-1 rounded-full shrink-0">
+      <i data-lucide="package" class="w-3.5 h-3.5 text-secondary animate-pulse"></i>
+      <span id="order-count-badge" class="text-[10px] text-secondary font-bold">0 Bookings</span>
+    </div>
+  </header>
+
+  <main class="max-w-md mx-auto p-4 space-y-4">
+    <!-- Active filter summary tabs for Salesperson -->
+    <div class="flex items-center gap-1.5 overflow-x-auto py-1 scrollbar-hide shrink-0">
+      <button class="filter-tab px-3 py-1.5 rounded-xl text-xs font-bold transition border shrink-0 bg-primary text-white border-primary" data-status="all">All Bookings</button>
+      <button class="filter-tab px-3 py-1.5 rounded-xl text-xs font-semibold text-amber-600 bg-amber-50 border-amber-200" data-status="pending">Pending</button>
+      <button class="filter-tab px-3 py-1.5 rounded-xl text-xs font-semibold text-blue-600 bg-blue-50 border-blue-200" data-status="confirmed">Confirmed</button>
+      <button class="filter-tab px-3 py-1.5 rounded-xl text-xs font-semibold text-emerald-600 bg-emerald-50 border-emerald-200" data-status="delivered">Delivered</button>
+      <button class="filter-tab px-3 py-1.5 rounded-xl text-xs font-semibold text-rose-600 bg-rose-50 border-rose-200" data-status="cancelled">Cancelled</button>
+    </div>
+
+    <!-- Live loader placeholder -->
+    <div id="orders-spinner" class="py-12 flex justify-center">
+      <div class="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent"></div>
+    </div>
+
+    <!-- Booking history cards listing -->
+    <div id="orders-list" class="space-y-4">
+      <!-- Injected list of salesperson orders render here -->
+    </div>
+
+    <!-- Empty State -->
+    <div id="empty-state" class="hidden text-center py-16 bg-white rounded-3xl p-6 border border-rose-950/5 animate-fade-in">
+      <div class="w-16 h-16 bg-slate-50 text-slate-400 rounded-full flex items-center justify-center mx-auto mb-3">
+        <i data-lucide="clipboard-list" class="w-8 h-8"></i>
+      </div>
+      <p class="font-bold text-slate-700 text-sm">No Orders Registered</p>
+      <p class="text-xs text-slate-400 mt-1">You haven't submitted any orders matching this category yet.</p>
+    </div>
+  </main>
+
+  <!-- Bottom Navigation tab bar -->
+  <nav class="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-rose-950/5 shadow-lg max-w-md mx-auto flex items-center justify-around py-2 px-1">
+    <a href="user_dashboard.html" class="flex flex-col items-center text-slate-400 hover:text-primary transition py-1">
+      <i data-lucide="home" class="w-5 h-5"></i>
+      <span class="text-[9px] font-semibold mt-0.5">Home</span>
+    </a>
+    <a href="user_orders.html" class="flex flex-col items-center text-primary transition py-1">
+      <i data-lucide="receipt" class="w-5 h-5"></i>
+      <span class="text-[9px] font-bold mt-0.5">History</span>
+    </a>
+    <a href="user_profile.html" class="flex flex-col items-center text-slate-400 hover:text-primary transition py-1">
+      <i data-lucide="user" class="w-5 h-5"></i>
+      <span class="text-[9px] font-semibold mt-0.5">Profile</span>
+    </a>
+  </nav>
+
+  <!-- Script logic -->
+  <script type="module">
+    import { 
+      db, 
+      ref, 
+      get, 
+      onValue, 
+      DB_ROOT, 
+      checkUserSession, 
+      showToast 
+    } from "./firebase-config.js";
+
+    let verifiedUser = null;
+    let allOrders = {};
+    let activeFilter = "all";
+
+    document.addEventListener("DOMContentLoaded", async () => {
+      lucide.createIcons();
+
+      // Session verification
+      verifiedUser = await checkUserSession();
+      if (!verifiedUser) {
+        window.location.href = "user_login.html";
+        return;
+      }
+
+      // DOM bindings
+      const userHeaderDp = document.getElementById("user-header-dp");
+      const orderCountBadge = document.getElementById("order-count-badge");
+      const ordersList = document.getElementById("orders-list");
+      const emptyState = document.getElementById("empty-state");
+      const spinner = document.getElementById("orders-spinner");
+
+      // Set user header photo
+      try {
+        const uSnap = await get(ref(db, `${DB_ROOT}/users/${verifiedUser.userId}`));
+        if (uSnap.exists()) {
+          const uObj = uSnap.val();
+          if (uObj.dpUrl) {
+            userHeaderDp.innerHTML = `<img src="${uObj.dpUrl}" class="w-full h-full object-cover rounded-full">`;
+          }
+        }
+      } catch (err) {
+        console.error("DP load failure:", err);
+      }
+
+      // RTDB setup real time sync of orders list
+      const ordersRef = ref(db, `${DB_ROOT}/orders`);
+      onValue(ordersRef, (snapshot) => {
+        spinner.classList.add("hidden");
+        if (snapshot.exists()) {
+          allOrders = {};
+          const rawOrdersObj = snapshot.val();
+          
+          // Filter locally: salesperson can ONLY see their own bookings!
+          Object.entries(rawOrdersObj).forEach(([oid, ord]) => {
+            if (ord.userId === verifiedUser.userId) {
+              allOrders[oid] = ord;
+            }
+          });
+        } else {
+          allOrders = {};
+        }
+        applyFilters();
+      }, (error) => {
+        spinner.classList.add("hidden");
+        console.error("Orders Sync Error: ", error);
+        showToast("Orders database connection failed.", "error");
+      });
+
+      // Local filters logic
+      function applyFilters() {
+        const oEntries = Object.entries(allOrders);
+        orderCountBadge.innerText = `${oEntries.length} Bookings`;
+
+        let filtered = oEntries;
+        if (activeFilter !== "all") {
+          filtered = oEntries.filter(([oid, ord]) => ord.status === activeFilter);
+        }
+
+        // Sort descending by timestamp (newest orders first)
+        filtered.sort((a,b) => (b[1].createdAt || 0) - (a[1].createdAt || 0));
+
+        renderOrdersList(filtered);
+      }
+
+      // Render bookings to user UI
+      function renderOrdersList(ordersArray) {
+        ordersList.innerHTML = "";
+        
+        if (ordersArray.length === 0) {
+          emptyState.classList.remove("hidden");
+          return;
+        }
+
+        emptyState.classList.add("hidden");
+
+        ordersArray.forEach(([orderId, order]) => {
+          const card = document.createElement("div");
+          card.className = "bg-white rounded-3xl p-4 border border-rose-950/5 shadow-xs space-y-3.5 relative overflow-hidden transition hover:shadow-sm";
+
+          // Status Badge details
+          let statusColorClass = "bg-amber-50 text-amber-700 border-amber-200";
+          if (order.status === "confirmed") statusColorClass = "bg-blue-50 text-blue-700 border-blue-200";
+          if (order.status === "delivered") statusColorClass = "bg-emerald-50 text-emerald-700 border-emerald-200";
+          if (order.status === "cancelled") statusColorClass = "bg-rose-50 text-rose-700 border-rose-200";
+
+          // Calculate Payments indicators
+          const bookingTotal = parseFloat(order.grandTotal || 0);
+          const advancePaid = parseFloat(order.advanceAmount || 0);
+          const finalPaid = parseFloat(order.finalAmount || 0);
+          const balanceVal = bookingTotal - advancePaid - finalPaid;
+
+          let blockPaymentHtml = "";
+          if (balanceVal <= 0) {
+            blockPaymentHtml = `
+              <div class="bg-emerald-50 rounded-2xl p-3 border border-emerald-200 flex items-center justify-between text-xs text-emerald-800 font-extrabold w-full select-none">
+                <div class="flex items-center gap-1.5">
+                  <i data-lucide="check-circle" class="w-4 h-4 text-emerald-600 shrink-0"></i>
+                  <span>Payment Status: Complete</span>
+                </div>
+                <span>₹0.00 Bal</span>
+              </div>
+            `;
+          } else {
+            blockPaymentHtml = `
+              <div class="bg-amber-50/50 rounded-2xl p-3 border border-amber-200/50 grid grid-cols-3 gap-1.5 text-center text-[10px] text-slate-500 font-semibold uppercase tracking-wider">
+                <div>
+                  <div>Adv. Paid</div>
+                  <div class="text-[11px] font-black text-slate-700 mt-0.5">₹${advancePaid.toFixed(2)}</div>
+                </div>
+                <div class="border-l border-dashed border-slate-200">
+                  <div>Final Paid</div>
+                  <div class="text-[11px] font-black text-slate-700 mt-0.5">₹${finalPaid.toFixed(2)}</div>
+                </div>
+                <div class="border-l border-dashed border-slate-200">
+                  <div class="text-primary font-bold">Remaining</div>
+                  <div class="text-[11px] font-extrabold text-primary mt-0.5">₹${balanceVal.toFixed(2)}</div>
+                </div>
+              </div>
+            `;
+          }
+
+          const orderDate = order.createdAt ? new Date(order.createdAt).toLocaleDateString("en-IN", {
+            day: "numeric",
+            month: "short",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit"
+          }) : "Unknown Date";
+
+          // Expand item summaries
+          let goodsRowsHtml = "";
+          if (order.items) {
+            Object.values(order.items).forEach(goods => {
+              goodsRowsHtml += `
+                <div class="flex justify-between items-center text-[11px] text-slate-500 py-1 border-b border-dotted border-slate-100">
+                  <div class="flex items-center gap-1.5 pr-2 truncate">
+                    <span class="font-bold text-slate-800">${goods.qty}x</span>
+                    <span class="truncate">${goods.name}</span>
+                  </div>
+                  <span class="font-bold shrink-0">₹${(goods.price * goods.qty).toFixed(2)}</span>
+                </div>
+              `;
+            });
+          }
+
+          card.innerHTML = `
+            <!-- Top Header info -->
+            <div class="flex items-start justify-between">
+              <div>
+                <div class="text-[10px] text-slate-400 font-mono tracking-widest uppercase">${orderId}</div>
+                <div class="text-[9px] text-slate-400 mt-0.5">${orderDate}</div>
+              </div>
+              <span class="text-[9px] uppercase font-bold tracking-wider px-2.5 py-0.5 rounded-full border ${statusColorClass}">
+                ${order.status}
+              </span>
+            </div>
+
+            <!-- Target physical store -->
+            <div class="bg-slate-50 rounded-2xl p-3 border border-slate-100 flex items-start gap-2.5">
+              <i data-lucide="store" class="text-primary w-4.5 h-4.5 shrink-0 mt-0.5"></i>
+              <div class="min-w-0 pr-1 select-none">
+                <h4 class="font-extrabold text-slate-800 text-xs truncate leading-none mb-1">${order.storeName || "Unknown store"}</h4>
+                <p class="text-[9px] text-slate-400 truncate leading-relaxed">${order.storeAddress || "Coordinates not available"}</p>
+              </div>
+            </div>
+
+            <!-- Items sublist drawer -->
+            <div class="space-y-1 pl-0.5">
+              <div class="text-[9px] text-slate-400 font-bold uppercase tracking-widest leading-none mb-1.5">Cart Items</div>
+              <div class="bg-white/45 p-1 rounded-xl">
+                ${goodsRowsHtml}
+              </div>
+            </div>
+
+            <!-- Order notes remarks if present -->
+            ${order.notes ? `
+              <div class="bg-amber-50/20 rounded-xl p-2 text-[10px] text-slate-500/90 italic flex items-start gap-1">
+                <i data-lucide="info" class="w-3.5 h-3.5 shrink-0 mt-0.5 text-slate-400"></i>
+                <span class="leading-relaxed">Notes: ${order.notes}</span>
+              </div>
+            `: ""}
+
+            <!-- Payment parameters -->
+            ${blockPaymentHtml}
+
+            <!-- Bottom pricing bar -->
+            <div class="flex justify-between items-center pt-2.5 border-t border-slate-100">
+              <div class="text-[9px] text-slate-400 font-extrabold uppercase tracking-wider">Total Value Booked</div>
+              <div class="text-sm font-black text-primary">₹${bookingTotal.toFixed(2)}</div>
+            </div>
+          `;
+
+          ordersList.appendChild(card);
+        });
+
+        lucide.createIcons();
+      }
+
+      // Filter category selections
+      document.querySelectorAll(".filter-tab").forEach(tab => {
+        tab.onclick = (e) => {
+          document.querySelectorAll(".filter-tab").forEach(t => {
+            t.className = "filter-tab px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-500 bg-slate-50 border border-slate-200 shrink-0";
+          });
+
+          const chosenId = e.currentTarget.getAttribute("data-status");
+          activeFilter = chosenId;
+
+          // Style active tab
+          if (activeFilter === "all") {
+            e.currentTarget.className = "filter-tab px-3 py-1.5 rounded-xl text-xs font-bold transition border shrink-0 bg-primary text-white border-primary";
+          } else if (activeFilter === "pending") {
+            e.currentTarget.className = "filter-tab px-3 py-1.5 rounded-xl text-xs font-bold transition border shrink-0 bg-amber-500 text-white border-amber-500";
+          } else if (activeFilter === "confirmed") {
+            e.currentTarget.className = "filter-tab px-3 py-1.5 rounded-xl text-xs font-bold transition border shrink-0 bg-blue-500 text-white border-blue-500";
+          } else if (activeFilter === "delivered") {
+            e.currentTarget.className = "filter-tab px-3 py-1.5 rounded-xl text-xs font-bold transition border shrink-0 bg-emerald-500 text-white border-emerald-500";
+          } else if (activeFilter === "cancelled") {
+            e.currentTarget.className = "filter-tab px-3 py-1.5 rounded-xl text-xs font-bold transition border shrink-0 bg-rose-500 text-white border-rose-500";
+          }
+
+          applyFilters();
+        };
+      });
+    });
+  </script>
+</body>
+</html>

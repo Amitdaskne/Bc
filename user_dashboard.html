@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Bhikharam Chandmal Sales Dashboard</title>
+  <!-- Google Fonts Poppins -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Tailwind CSS Play CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#7d0000',
+            secondary: '#ffd54a',
+            bgsoft: '#f7f4ec',
+          },
+          fontFamily: {
+            sans: ['Poppins', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-bgsoft font-sans min-h-screen text-slate-800 pb-24">
+
+  <!-- Sticky Header -->
+  <header class="sticky top-0 z-40 bg-primary text-white border-b-4 border-secondary shadow-md px-4 py-3 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div id="user-header-dp" class="w-10 h-10 rounded-full border border-secondary bg-white/10 overflow-hidden flex items-center justify-center shrink-0">
+        <i data-lucide="user" class="text-secondary w-5 h-5"></i>
+      </div>
+      <div>
+        <h1 id="user-welcome" class="text-sm font-bold tracking-wide leading-tight">Sales Dashboard</h1>
+        <p class="text-[9px] uppercase font-semibold text-secondary tracking-widest leading-none mt-0.5">Authorised Booking Agent</p>
+      </div>
+    </div>
+    
+    <div class="flex items-center gap-2">
+      <a href="user_orders.html" class="relative w-9 h-9 hover:bg-black/10 rounded-xl flex items-center justify-center transition" title="Order History">
+        <i data-lucide="history" class="text-secondary w-5 h-5"></i>
+      </a>
+    </div>
+  </header>
+
+  <main class="max-w-md mx-auto p-4 space-y-4">
+    <!-- Quick Welcome message -->
+    <div class="bg-gradient-to-br from-primary to-rose-950 text-white rounded-3xl p-5 shadow-xl relative overflow-hidden">
+      <div class="absolute -right-8 -bottom-8 w-28 h-28 bg-white/5 rounded-full blur-xl"></div>
+      <div class="absolute -left-8 -top-8 w-24 h-24 bg-secondary/10 rounded-full blur-lg"></div>
+      
+      <div class="relative z-10 space-y-1">
+        <div class="text-[9px] bg-secondary/20 text-secondary border border-secondary/30 rounded-full px-2.5 py-0.5 inline-block font-bold uppercase tracking-wider">
+          Sales Representative
+        </div>
+        <h2 class="text-lg font-black tracking-tight" id="dashboard-name-greet">Welcome Back!</h2>
+        <p class="text-xs text-rose-200/90 leading-relaxed">Select one of your assigned stores below to begin taking orders & managing dispatch metrics.</p>
+      </div>
+    </div>
+
+    <!-- Active Stores header section -->
+    <div class="flex justify-between items-center text-xs text-slate-500 font-semibold uppercase tracking-wider px-1">
+      <span>My Assigned Storefronts</span>
+      <span id="stores-count-badge" class="bg-primary/5 text-primary px-2.5 py-0.5 rounded-full">0 Stores</span>
+    </div>
+
+    <!-- Live loader placeholder -->
+    <div id="dashboard-spinner" class="py-12 flex justify-center">
+      <div class="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent"></div>
+    </div>
+
+    <!-- List of assigned stores -->
+    <div id="stores-list" class="space-y-4">
+      <!-- Injected store elements render here -->
+    </div>
+
+    <!-- Empty State -->
+    <div id="empty-state" class="hidden text-center py-16 bg-white rounded-3xl p-6 border border-rose-950/5">
+      <div class="w-16 h-16 bg-slate-50 text-slate-400 rounded-full flex items-center justify-center mx-auto mb-3">
+        <i data-lucide="store-off" class="w-8 h-8"></i>
+      </div>
+      <p class="font-bold text-slate-700 text-sm">No Assigned Stores</p>
+      <p class="text-xs text-slate-400 mt-1">You currently have no stores assigned to your profile. Please contact your Administrator to allocate stores.</p>
+    </div>
+  </main>
+
+  <!-- Bottom Navigation tab bar as requested -->
+  <nav class="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-rose-950/5 shadow-lg max-w-md mx-auto flex items-center justify-around py-2 px-1">
+    <a href="user_dashboard.html" class="flex flex-col items-center text-primary transition py-1">
+      <i data-lucide="home" class="w-5 h-5"></i>
+      <span class="text-[9px] font-bold mt-0.5">Home</span>
+    </a>
+    <a href="user_orders.html" class="flex flex-col items-center text-slate-400 hover:text-primary transition py-1">
+      <i data-lucide="receipt" class="w-5 h-5"></i>
+      <span class="text-[9px] font-semibold mt-0.5">History</span>
+    </a>
+    <a href="user_profile.html" class="flex flex-col items-center text-slate-400 hover:text-primary transition py-1">
+      <i data-lucide="user" class="w-5 h-5"></i>
+      <span class="text-[9px] font-semibold mt-0.5">Profile</span>
+    </a>
+  </nav>
+
+  <!-- Script logic -->
+  <script type="module">
+    import { 
+      db, 
+      ref, 
+      get, 
+      DB_ROOT, 
+      checkUserSession, 
+      showToast 
+    } from "./firebase-config.js";
+
+    document.addEventListener("DOMContentLoaded", async () => {
+      lucide.createIcons();
+
+      // Session Verification
+      const verified = await checkUserSession();
+      if (!verified) {
+        window.location.href = "user_login.html";
+        return;
+      }
+
+      // DOM bindings
+      const userWelcome = document.getElementById("user-welcome");
+      const dashboardGreet = document.getElementById("dashboard-name-greet");
+      const userHeaderDp = document.getElementById("user-header-dp");
+      const storesCountBadge = document.getElementById("stores-count-badge");
+      const storesList = document.getElementById("stores-list");
+      const emptyState = document.getElementById("empty-state");
+      const spinner = document.getElementById("dashboard-spinner");
+
+      // Render customized greeters
+      userWelcome.innerText = verified.name || verified.username;
+      dashboardGreet.innerText = `Welcome, ${verified.name || 'Agent'}!`;
+
+      // Fetch user profile details to populate custom DP if available
+      try {
+        const uSnap = await get(ref(db, `${DB_ROOT}/users/${verified.userId}`));
+        if (uSnap.exists()) {
+          const uObj = uSnap.val();
+          if (uObj.dpUrl) {
+            userHeaderDp.innerHTML = `<img src="${uObj.dpUrl}" class="w-full h-full object-cover rounded-full">`;
+          }
+        }
+      } catch (err) {
+        console.error("DP load failure:", err);
+      }
+
+      // Fetch assignments AND details of all stores to perform local join filter
+      try {
+        const assignSnap = await get(ref(db, `${DB_ROOT}/assignments/${verified.userId}`));
+        const storesSnap = await get(ref(db, `${DB_ROOT}/stores`));
+
+        spinner.classList.add("hidden");
+
+        const hasAssignments = assignSnap.exists();
+        const hasStores = storesSnap.exists();
+
+        if (!hasAssignments || !hasStores) {
+          emptyState.classList.remove("hidden");
+          storesCountBadge.innerText = "0 Stores";
+          return;
+        }
+
+        const myAssignmentsMap = assignSnap.val(); // e.g. { storeId_1: true, storeId_2: true }
+        const globalStoresObj = storesSnap.val();
+
+        // Perform local joins
+        const allocatedStoresList = Object.entries(globalStoresObj).filter(([sid, s]) => {
+          return myAssignmentsMap[sid] === true;
+        });
+
+        storesCountBadge.innerText = `${allocatedStoresList.length} Stores`;
+
+        if (allocatedStoresList.length === 0) {
+          emptyState.classList.remove("hidden");
+          return;
+        }
+
+        emptyState.classList.add("hidden");
+
+        // Sort store name
+        allocatedStoresList.sort((a,b) => (a[1].name || "").localeCompare(b[1].name || ""));
+
+        // Render storefronts in list
+        allocatedStoresList.forEach(([sid, store]) => {
+          const storeCard = document.createElement("div");
+          storeCard.className = "bg-white rounded-3xl border border-rose-950/5 shadow-xs overflow-hidden flex flex-col transition hover:shadow-sm";
+          
+          const bannerImgHtml = store.imageUrl
+            ? `<img src="${store.imageUrl}" class="w-full h-36 object-cover select-none" alt="Store banner">`
+            : `
+              <div class="w-full h-32 bg-amber-50 border-b border-rose-950/5 flex flex-col items-center justify-center gap-1 select-none">
+                <i data-lucide="store" class="text-primary/45 w-10 h-10"></i>
+                <span class="text-[9px] text-slate-400 font-extrabold uppercase tracking-widest">Store catalog</span>
+              </div>
+            `;
+
+          storeCard.innerHTML = `
+            ${bannerImgHtml}
+            <div class="p-5 space-y-4">
+              <div>
+                <h3 class="font-extrabold text-slate-800 text-sm tracking-wide leading-tight">${store.name}</h3>
+                <div class="flex items-center gap-1.5 text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1.5">
+                  <i data-lucide="user-check" class="w-3.5 h-3.5 text-slate-400"></i>
+                  <span>In-Charge: <strong class="text-slate-600">${store.contactPerson || "N/A"}</strong></span>
+                </div>
+              </div>
+
+              <!-- specs -->
+              <div class="bg-slate-50 border border-slate-100 p-3 rounded-2xl text-[11px] text-slate-600 space-y-2">
+                <div class="flex items-center gap-2">
+                  <i data-lucide="phone" class="w-3.5 h-3.5 text-slate-400 shrink-0"></i>
+                  <span class="font-semibold text-slate-700">${store.mobile || "No Mobile"}</span>
+                </div>
+                <div class="flex items-start gap-2">
+                  <i data-lucide="map-pin" class="w-3.5 h-3.5 text-primary shrink-0 mt-0.5"></i>
+                  <span class="leading-relaxed">${store.address || "No complete address compiled"}</span>
+                </div>
+              </div>
+
+              <!-- Button to trigger orders -->
+              <a 
+                href="user_products.html?storeId=${sid}" 
+                class="w-full bg-primary hover:bg-rose-950 text-white font-bold text-xs py-3 rounded-2xl flex items-center justify-center gap-1.5 transition active:scale-[0.98] shadow-md hover:shadow-lg"
+              >
+                <i data-lucide="shopping-bag" class="w-4 h-4 text-secondary"></i>
+                <span>Open Product Catalog</span>
+              </a>
+            </div>
+          `;
+
+          storesList.appendChild(storeCard);
+        });
+
+        lucide.createIcons();
+
+      } catch (err) {
+        console.error("Dashboard error: ", err);
+        showToast("Error retrieving Assigned catalogs: " + err.message, "error");
+        spinner.classList.add("hidden");
+      }
+    });
+  </script>
+</body>
+</html>

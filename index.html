@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Bhikharam Chandmal Order Management System</title>
+  <!-- Google Fonts Poppins -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <!-- Tailwind CSS Play CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#7d0000',
+            secondary: '#ffd54a',
+            bgsoft: '#f7f4ec',
+          },
+          fontFamily: {
+            sans: ['Poppins', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-bgsoft font-sans min-h-screen flex flex-col justify-between text-slate-800">
+
+  <!-- Main Hero and Gateway block -->
+  <div class="flex-1 flex flex-col items-center justify-center p-4">
+    <div class="bg-white rounded-[32px] shadow-2xl border border-rose-950/5 w-full max-w-md p-8 relative overflow-hidden text-center space-y-6">
+      
+      <!-- Premium Decor graphics -->
+      <div class="absolute -top-12 -right-12 w-40 h-40 bg-[#ffd54a]/20 rounded-full blur-3xl select-none"></div>
+      <div class="absolute -bottom-12 -left-12 w-40 h-40 bg-[#7d0000]/10 rounded-full blur-3xl select-none"></div>
+
+      <!-- Icon & Branding Header -->
+      <div class="space-y-3 relative z-10">
+        <div class="w-20 h-20 bg-primary border-4 border-secondary/40 rounded-3xl flex items-center justify-center mx-auto shadow-xl">
+          <i data-lucide="package-check" class="text-secondary w-10 h-10"></i>
+        </div>
+        
+        <div class="space-y-1">
+          <h1 class="text-xl font-black text-primary tracking-wide leading-tight">BHIKHARAM CHANDMAL</h1>
+          <p class="text-[10px] uppercase font-extrabold tracking-widest text-[#ffd54a] bg-primary/95 px-4 py-1.5 rounded-full inline-block">Order Management System</p>
+        </div>
+      </div>
+
+      <!-- Subtitle Message info -->
+      <p class="text-xs text-slate-500 max-w-xs mx-auto leading-relaxed relative z-10 font-medium">
+        Welcome to the offical B2B order booking platform. Choose your access portal option below to proceed.
+      </p>
+
+      <!-- Selection CTA buttons -->
+      <div class="space-y-3 relative z-10 pt-2">
+        <!-- Salesperson booking portal -->
+        <a 
+          href="user_login.html" 
+          class="w-full bg-primary hover:bg-rose-950 active:scale-[0.98] text-white py-4 px-5 rounded-2xl font-bold text-xs shadow-md hover:shadow-lg transition flex items-center justify-between"
+        >
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-secondary">
+              <i data-lucide="shopping-bag" class="w-4 h-4"></i>
+            </div>
+            <div class="text-left">
+              <div>Sales Representative Login</div>
+              <p class="text-[9px] text-rose-200/90 font-medium leading-none mt-0.5">Place orders for partners & check stocks</p>
+            </div>
+          </div>
+          <i data-lucide="chevron-right" class="w-4 h-4 text-secondary"></i>
+        </a>
+
+        <!-- Administration Portal control panel -->
+        <a 
+          href="admin_login.html" 
+          class="w-full bg-slate-50 hover:bg-slate-100 active:scale-[0.98] text-slate-700 py-4 px-5 rounded-2xl font-bold text-xs border border-slate-200 transition flex items-center justify-between"
+        >
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-lg bg-[#7d0000]/5 flex items-center justify-center text-primary">
+              <i data-lucide="shield" class="w-4 h-4"></i>
+            </div>
+            <div class="text-left">
+              <div>Administrative Console</div>
+              <p class="text-[9px] text-slate-400 font-medium leading-none mt-0.5">Manage users, catalog items, and payments</p>
+            </div>
+          </div>
+          <i data-lucide="chevron-right" class="w-4 h-4 text-primary"></i>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Standard footer line -->
+  <div class="text-center text-slate-400 text-xs py-5">
+    <p>&copy; 2026 Bhikharam Chandmal. All Rights Reserved.</p>
+  </div>
+
+  <!-- Lucide script initialization -->
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      lucide.createIcons();
+    });
+  </script>
+</body>
+</html>

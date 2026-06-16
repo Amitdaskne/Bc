@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Bhikharam Chandmal Admin Products</title>
+  <!-- Google Fonts Poppins -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Tailwind CSS Play CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#7d0000',
+            secondary: '#ffd54a',
+            bgsoft: '#f7f4ec',
+          },
+          fontFamily: {
+            sans: ['Poppins', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-bgsoft font-sans min-h-screen text-slate-800 pb-24">
+
+  <!-- Sticky Header -->
+  <header class="sticky top-0 z-40 bg-primary text-white border-b-4 border-secondary shadow-md px-4 py-3 flex items-center justify-between">
+    <div class="flex items-center gap-2">
+      <a href="admin_dashboard.html" class="w-9 h-9 hover:bg-black/20 rounded-xl flex items-center justify-center transition">
+        <i data-lucide="chevron-left" class="text-secondary w-6 h-6"></i>
+      </a>
+      <div>
+        <h1 class="text-sm font-bold tracking-wider leading-tight">MANAGE INVENTORY</h1>
+        <p class="text-[10px] font-semibold text-secondary tracking-widest uppercase">Admin Operations</p>
+      </div>
+    </div>
+    <button 
+      id="open-add-dialog" 
+      class="bg-secondary text-primary font-bold hover:bg-yellow-400 active:scale-[0.97] rounded-xl text-xs px-3 py-2 flex items-center gap-1.5 shadow"
+    >
+      <i data-lucide="package-plus" class="w-4 h-4"></i>
+      <span>Add Product</span>
+    </button>
+  </header>
+
+  <main class="max-w-md mx-auto p-4 space-y-4">
+    <!-- Search Bar -->
+    <div class="relative">
+      <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+        <i data-lucide="search" class="text-slate-400 w-5 h-5"></i>
+      </span>
+      <input 
+        type="text" 
+        id="search-input" 
+        placeholder="Search products by name, description, store..." 
+        class="w-full pl-10 pr-10 py-3 bg-white border border-rose-950/5 rounded-2xl text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-xs transition"
+      >
+      <button 
+        id="clear-search" 
+        class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600 hidden"
+      >
+        <i data-lucide="x" class="w-4 h-4"></i>
+      </button>
+    </div>
+
+    <!-- Active Products Count Badge -->
+    <div class="flex justify-between items-center text-xs text-slate-500 font-semibold uppercase tracking-wider px-1">
+      <span>Products Catalog</span>
+      <span id="product-count-badge" class="bg-primary/5 text-primary px-2.5 py-0.5 rounded-full">0 Products</span>
+    </div>
+
+    <!-- Loader placeholder -->
+    <div id="products-spinner" class="py-12 flex justify-center">
+      <div class="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent"></div>
+    </div>
+
+    <!-- Products Container list -->
+    <div id="products-list" class="space-y-3">
+      <!-- Injected product cards go here -->
+    </div>
+
+    <!-- Empty State -->
+    <div id="empty-state" class="hidden text-center py-12 bg-white rounded-3xl p-6 border border-rose-950/5">
+      <div class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-3">
+        <i data-lucide="package" class="text-slate-400 w-8 h-8"></i>
+      </div>
+      <p class="font-bold text-slate-700 text-sm">No products found</p>
+      <p class="text-xs text-slate-400 mt-1">Add items to store inventories to build your catalog.</p>
+    </div>
+  </main>
+
+  <!-- POPUP: Create / Edit Product Modal Dialog -->
+  <div id="product-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-3xl shadow-xl w-full max-w-sm max-h-[90vh] overflow-y-auto transform transition scale-95 duration-200">
+      
+      <!-- Modal Header -->
+      <div class="bg-primary px-6 py-4 flex items-center justify-between text-white border-b border-rose-950/10">
+        <h3 id="modal-title" class="font-bold text-base tracking-wide">Add Product</h3>
+        <button id="close-modal" class="w-8 h-8 hover:bg-black/10 rounded-lg flex items-center justify-center transition">
+          <i data-lucide="x" class="text-white w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <form id="product-form" class="p-6 space-y-4">
+        <input type="hidden" id="form-product-id">
+
+        <!-- Product Image Upload Field -->
+        <div class="flex flex-col items-center gap-3">
+          <div class="relative w-24 h-24 rounded-2xl border-2 border-slate-200 overflow-hidden bg-slate-100 flex items-center justify-center">
+            <img id="form-image-preview" class="w-full h-full object-cover hidden" alt="Product Image">
+            <div id="form-image-placeholder" class="text-center">
+              <i data-lucide="package" class="text-slate-400 w-8 h-8 mx-auto"></i>
+              <span class="text-[9px] text-slate-400 font-bold uppercase mt-1 block">Photo</span>
+            </div>
+            <div id="uploading-overlay" class="absolute inset-0 bg-black/60 flex items-center justify-center hidden">
+              <div class="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+            </div>
+          </div>
+          <label class="cursor-pointer bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl px-4 py-1.5 text-xs font-semibold select-none border border-slate-200 transition">
+            <span>Upload Product Photo</span>
+            <input type="file" id="form-file-input" accept="image/*" class="hidden">
+          </label>
+          <input type="hidden" id="form-image-url" value="">
+        </div>
+
+
+
+        <!-- Product Name Field -->
+        <div>
+          <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Product Name</label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 flex items-center pl-3">
+              <i data-lucide="tag" class="text-slate-400 w-4.5 h-4.5"></i>
+            </span>
+            <input 
+              type="text" 
+              id="form-name" 
+              placeholder="e.g. Bhujia Sew (Mini-Pack)" 
+              required
+              class="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-xs focus:ring-2 focus:ring-primary/20 outline-none transition"
+            >
+          </div>
+        </div>
+
+        <!-- Description Field -->
+        <div>
+          <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Short Description</label>
+          <div class="relative">
+            <span class="absolute top-3 left-3">
+              <i data-lucide="align-left" class="text-slate-400 w-4.5 h-4.5"></i>
+            </span>
+            <textarea 
+              id="form-description" 
+              placeholder="Flavor notes, dimensions, details..." 
+              required
+              rows="2.5"
+              class="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-xs focus:ring-2 focus:ring-primary/20 outline-none transition resize-none"
+            ></textarea>
+          </div>
+        </div>
+
+        <!-- Price and Stock Numeric Grid -->
+        <div class="grid grid-cols-2 gap-3">
+          <!-- Price -->
+          <div>
+            <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Price (₹)</label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-500 font-bold text-xs select-none">₹</span>
+              <input 
+                type="number" 
+                id="form-price" 
+                placeholder="0.00" 
+                step="0.01" 
+                min="0"
+                required
+                class="w-full pl-7 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-xs focus:ring-2 focus:ring-primary/20 outline-none transition font-semibold"
+              >
+            </div>
+          </div>
+          <!-- Stock Quantity -->
+          <div>
+            <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Stock Volume</label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 flex items-center pl-3">
+                <i data-lucide="boxes" class="text-slate-400 w-4.5 h-4.5"></i>
+              </span>
+              <input 
+                type="number" 
+                id="form-stock" 
+                placeholder="e.g. 50" 
+                min="0"
+                required
+                class="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-xs focus:ring-2 focus:ring-primary/20 outline-none transition font-semibold"
+              >
+            </div>
+          </div>
+        </div>
+
+        <!-- Submit Button -->
+        <button 
+          type="submit" 
+          id="form-submit-btn" 
+          class="w-full bg-primary hover:bg-rose-950 active:scale-[0.97] text-white py-3 px-4 rounded-xl font-bold text-xs shadow-md transition flex items-center justify-center gap-1.5 pt-2.5 pb-2.5"
+        >
+          <i data-lucide="save" class="w-4 h-4"></i>
+          <span>Save Product Listing</span>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Bottom navigation -->
+  <nav class="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-rose-950/5 shadow-lg max-w-md mx-auto flex items-center justify-around py-2 px-1">
+    <a href="admin_dashboard.html" class="flex flex-col items-center text-slate-400 hover:text-primary transition py-1">
+      <i data-lucide="home" class="w-5 h-5"></i>
+      <span class="text-[9px] font-semibold mt-0.5">Home</span>
+    </a>
+    <a href="admin_users.html" class="flex flex-col items-center text-slate-400 hover:text-primary transition py-1">
+      <i data-lucide="users" class="w-5 h-5"></i>
+      <span class="text-[9px] font-semibold mt-0.5">Users</span>
+    </a>
+    <a href="admin_stores.html" class="flex flex-col items-center text-slate-400 hover:text-primary transition py-1">
+      <i data-lucide="store" class="w-5 h-5"></i>
+      <span class="text-[9px] font-semibold mt-0.5">Stores</span>
+    </a>
+    <a href="admin_products.html" class="flex flex-col items-center text-primary transition py-1">
+      <i data-lucide="package" class="w-5 h-5"></i>
+      <span class="text-[9px] font-bold mt-0.5">Products</span>
+    </a>
+    <a href="admin_orders.html" class="flex flex-col items-center text-slate-400 hover:text-primary transition py-1">
+      <i data-lucide="shopping-bag" class="w-5 h-5"></i>
+      <span class="text-[9px] font-semibold mt-0.5">Orders</span>
+    </a>
+  </nav>
+
+  <!-- Script logic -->
+  <script type="module">
+    import { 
+      db, 
+      ref, 
+      set, 
+      get, 
+      update, 
+      remove, 
+      onValue, 
+      DB_ROOT, 
+      checkAdminSession, 
+      showToast, 
+      uploadImageToCloudinary 
+    } from "./firebase-config.js";
+
+    let allProducts = {};
+    let activeSearchText = "";
+
+    document.addEventListener("DOMContentLoaded", async () => {
+      lucide.createIcons();
+
+      // Check Administrative Authentication Portal
+      const verified = await checkAdminSession();
+      if (!verified) {
+        window.location.href = "admin_login.html";
+        return;
+      }
+
+      // Dialog items references
+      const addBtn = document.getElementById("open-add-dialog");
+      const productModal = document.getElementById("product-modal");
+      const closeModal = document.getElementById("close-modal");
+      const productForm = document.getElementById("product-form");
+      const modalTitle = document.getElementById("modal-title");
+      
+      const formProductId = document.getElementById("form-product-id");
+      const formName = document.getElementById("form-name");
+      const formDescription = document.getElementById("form-description");
+      const formPrice = document.getElementById("form-price");
+      const formStock = document.getElementById("form-stock");
+      const formImageUrl = document.getElementById("form-image-url");
+      const fileInput = document.getElementById("form-file-input");
+      
+      const formImagePreview = document.getElementById("form-image-preview");
+      const formImagePlaceholder = document.getElementById("form-image-placeholder");
+      const uploadingOverlay = document.getElementById("uploading-overlay");
+
+      // Search & Listing Controls
+      const searchInput = document.getElementById("search-input");
+      const clearSearchBtn = document.getElementById("clear-search");
+      const productsList = document.getElementById("products-list");
+      const emptyState = document.getElementById("empty-state");
+      const productCountBadge = document.getElementById("product-count-badge");
+      const productsSpinner = document.getElementById("products-spinner");
+
+      // Products are universal: no store population needed.
+
+      // 2. Setup Products RTDB Sync listener
+      const goodsRef = ref(db, `${DB_ROOT}/products`);
+      onValue(goodsRef, (snapshot) => {
+        productsSpinner.classList.add("hidden");
+        if (snapshot.exists()) {
+          allProducts = snapshot.val();
+        } else {
+          allProducts = {};
+        }
+        renderProducts();
+      }, (error) => {
+        console.error(error);
+        showToast("Failed to fetch product catalog: " + error.message, "error");
+        productsSpinner.classList.add("hidden");
+      });
+
+      // Render products listing
+      function renderProducts() {
+        productsList.innerHTML = "";
+        const pList = Object.entries(allProducts);
+        
+        let filtered = pList;
+        if (activeSearchText) {
+          filtered = pList.filter(([id, p]) => {
+            const nameMatch = p.name && p.name.toLowerCase().includes(activeSearchText.toLowerCase());
+            const descMatch = p.description && p.description.toLowerCase().includes(activeSearchText.toLowerCase());
+            return nameMatch || descMatch;
+          });
+        }
+
+        productCountBadge.innerText = `${filtered.length} Products`;
+
+        if (filtered.length === 0) {
+          emptyState.classList.remove("hidden");
+          return;
+        }
+
+        emptyState.classList.add("hidden");
+
+        // Sort by product name
+        filtered.sort((a,b) => (a[1].name || "").localeCompare(b[1].name || ""));
+
+        filtered.forEach(([productId, product]) => {
+          const productCard = document.createElement("div");
+          productCard.className = "bg-white rounded-2xl p-3 border border-rose-950/5 shadow-xs flex gap-3 relative overflow-hidden transition hover:shadow-sm";
+          
+          const defaultProdImgHtml = product.imageUrl 
+            ? `<img src="${product.imageUrl}" class="w-20 h-20 rounded-xl object-cover shrink-0 border border-slate-100 select-none">`
+            : `
+              <div class="w-20 h-20 rounded-xl bg-amber-50 flex flex-col items-center justify-center shrink-0 border border-amber-100 select-none">
+                <i data-lucide="package" class="text-primary/45 w-7 h-7"></i>
+              </div>
+            `;
+
+          // Stock level representation
+          const stockNum = Number(product.stock || 0);
+          let stockTextClass = "bg-emerald-50 text-emerald-700 border-emerald-200";
+          let stockLabel = `${stockNum} Stock`;
+
+          if (stockNum === 0) {
+            stockTextClass = "bg-rose-50 text-rose-700 border-rose-200";
+            stockLabel = "OUT OF STOCK";
+          } else if (stockNum <= 10) {
+            stockTextClass = "bg-amber-50 text-amber-700 border-amber-200";
+            stockLabel = `${stockNum} Left (Low)`;
+          }
+
+          productCard.innerHTML = `
+            ${defaultProdImgHtml}
+            <div class="flex-1 flex flex-col justify-between min-w-0">
+              <div>
+                <div class="flex items-start justify-between gap-1.5">
+                  <h4 class="font-bold text-slate-800 text-sm tracking-wide leading-tight truncate mr-2" title="${product.name}">${product.name}</h4>
+                  <span class="text-primary font-bold text-sm shrink-0 whitespace-nowrap">₹${product.price}</span>
+                </div>
+                <p class="text-[10px] text-slate-400 mt-0.5 truncate max-w-[200px]" title="${product.description}">${product.description || "No description provided."}</p>
+              </div>
+
+              <div class="flex items-center justify-between gap-2 mt-1.5">
+                <div class="flex items-center gap-1.5 flex-wrap">
+                  <span class="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-md border ${stockTextClass}">${stockLabel}</span>
+                  <span class="text-[10px] font-semibold text-slate-500 flex items-center gap-1">
+                    <i data-lucide="globe" class="text-slate-400 w-3 h-3"></i>
+                    <span>Universal SKU</span>
+                  </span>
+                </div>
+                
+                <!-- Edit Options -->
+                <div class="flex items-center gap-1">
+                  <button class="edit-btn p-1.5 text-blue-600 hover:bg-blue-50 border border-blue-100 rounded-lg transition shrink-0" data-id="${productId}">
+                    <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
+                  </button>
+                  <button class="delete-btn p-1.5 text-rose-600 hover:bg-rose-50 border border-rose-100 rounded-lg transition shrink-0" data-id="${productId}">
+                    <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          `;
+
+          productsList.appendChild(productCard);
+        });
+
+        lucide.createIcons();
+
+        // Attach action handlers
+        document.querySelectorAll(".edit-btn").forEach(btn => {
+          btn.onclick = (e) => {
+            const pid = e.currentTarget.getAttribute("data-id");
+            openEditModal(pid);
+          };
+        });
+
+        document.querySelectorAll(".delete-btn").forEach(btn => {
+          btn.onclick = async (e) => {
+            const pid = e.currentTarget.getAttribute("data-id");
+            if (confirm("Are you sure you want to delete this product listing? This item will be removed from all shopping carts.")) {
+              try {
+                productsSpinner.classList.remove("hidden");
+                
+                // Clear out of cart registries for all active users
+                const cartsRef = ref(db, `${DB_ROOT}/carts`);
+                const snapshot = await get(cartsRef);
+                if (snapshot.exists()) {
+                  const carts = snapshot.val();
+                  for (const uid in carts) {
+                    if (carts[uid] && carts[uid][pid]) {
+                      await remove(ref(db, `${DB_ROOT}/carts/${uid}/${pid}`));
+                    }
+                  }
+                }
+
+                // Delete product node
+                await remove(ref(db, `${DB_ROOT}/products/${pid}`));
+                showToast("Product deleted from inventory.", "success");
+              } catch (err) {
+                showToast("Failed to delete product: " + err.message, "error");
+              } finally {
+                productsSpinner.classList.add("hidden");
+              }
+            }
+          };
+        });
+      }
+
+      // Dialog Close/Open Helpers
+      addBtn.onclick = () => {
+        resetForm();
+        modalTitle.innerText = "Add Product";
+        productModal.classList.remove("hidden");
+        document.body.classList.add("overflow-hidden");
+      };
+
+      closeModal.onclick = () => {
+        productModal.classList.add("hidden");
+        document.body.classList.remove("overflow-hidden");
+      };
+
+      // Reset form controls
+      function resetForm() {
+        productForm.reset();
+        formProductId.value = "";
+        formImageUrl.value = "";
+        formImagePreview.src = "";
+        formImagePreview.classList.add("hidden");
+        formImagePlaceholder.classList.remove("hidden");
+      }
+
+      // Handle Image File selection -> Cloudinary Upload
+      fileInput.onchange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        uploadingOverlay.classList.remove("hidden");
+        try {
+          const uploadedUrl = await uploadImageToCloudinary(file);
+          formImageUrl.value = uploadedUrl;
+          formImagePreview.src = uploadedUrl;
+          formImagePreview.classList.remove("hidden");
+          formImagePlaceholder.classList.add("hidden");
+          showToast("Product photo uploaded successfully!", "success");
+        } catch (error) {
+          showToast("Failed to upload product photo: " + error.message, "error");
+        } finally {
+          uploadingOverlay.classList.add("hidden");
+        }
+      };
+
+      // Open in Edit Mode
+      function openEditModal(pid) {
+        const prod = allProducts[pid];
+        if (!prod) return;
+
+        resetForm();
+        modalTitle.innerText = "Edit Product";
+        formProductId.value = pid;
+        formName.value = prod.name || "";
+        formDescription.value = prod.description || "";
+        formPrice.value = prod.price || "";
+        formStock.value = prod.stock || "0";
+        formImageUrl.value = prod.imageUrl || "";
+
+        if (prod.imageUrl) {
+          formImagePreview.src = prod.imageUrl;
+          formImagePreview.classList.remove("hidden");
+          formImagePlaceholder.classList.add("hidden");
+        }
+
+        productModal.classList.remove("hidden");
+        document.body.classList.add("overflow-hidden");
+      }
+
+      // Store Details validation on form submission
+      productForm.onsubmit = async (e) => {
+        e.preventDefault();
+
+        const pid = formProductId.value;
+        const name = formName.value.trim();
+        const description = formDescription.value.trim();
+        const price = parseFloat(formPrice.value).toFixed(2);
+        const stock = parseInt(formStock.value, 10);
+        const imageUrl = formImageUrl.value;
+
+        productsSpinner.classList.remove("hidden");
+        productModal.classList.add("hidden");
+        document.body.classList.remove("overflow-hidden");
+
+        try {
+          if (pid) {
+            // Edit existing
+            const itemRef = ref(db, `${DB_ROOT}/products/${pid}`);
+            await update(itemRef, {
+              name,
+              description,
+              price: parseFloat(price),
+              stock,
+              imageUrl
+            });
+            showToast("Product details updated.", "success");
+          } else {
+            // New record ID insertion
+            const newId = "product_" + Date.now();
+            const itemRef = ref(db, `${DB_ROOT}/products/${newId}`);
+            await set(itemRef, {
+              name,
+              description,
+              price: parseFloat(price),
+              stock,
+              imageUrl,
+              createdAt: Date.now()
+            });
+            showToast("Product listing created in inventory.", "success");
+          }
+        } catch (error) {
+          showToast("Database Server Error: " + error.message, "error");
+        } finally {
+          productsSpinner.classList.add("hidden");
+        }
+      };
+
+      // Search events
+      searchInput.oninput = (e) => {
+        activeSearchText = e.target.value;
+        if (activeSearchText) {
+          clearSearchBtn.classList.remove("hidden");
+        } else {
+          clearSearchBtn.classList.add("hidden");
+        }
+        renderProducts();
+      };
+
+      clearSearchBtn.onclick = () => {
+        searchInput.value = "";
+        activeSearchText = "";
+        clearSearchBtn.classList.add("hidden");
+        renderProducts();
+      };
+    });
+  </script>
+</body>
+</html>

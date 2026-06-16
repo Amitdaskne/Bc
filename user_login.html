@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Bhikharam Chandmal Partner Portals</title>
+  <!-- Google Fonts Poppins -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Tailwind CSS Play CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#7d0000',
+            secondary: '#ffd54a',
+            bgsoft: '#f7f4ec',
+          },
+          fontFamily: {
+            sans: ['Poppins', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-bgsoft font-sans min-h-screen flex flex-col justify-between text-slate-800">
+  
+  <div class="flex-1 flex flex-col items-center justify-center p-4">
+    <!-- Login Card Container -->
+    <div class="bg-white rounded-3xl shadow-xl border border-rose-950/5 w-full max-w-md p-8 relative overflow-hidden">
+      <!-- Decor items -->
+      <div class="absolute -top-10 -right-10 w-32 h-32 bg-[#ffd54a]/20 rounded-full blur-2xl"></div>
+      <div class="absolute -bottom-10 -left-10 w-32 h-32 bg-[#7d0000]/5 rounded-full blur-2xl"></div>
+      
+      <!-- Brand Logo / Header -->
+      <div class="text-center mb-8 relative z-10">
+        <div class="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center mx-auto mb-4 border border-secondary shadow-lg">
+          <i data-lucide="shopping-bag" class="text-secondary w-8 h-8"></i>
+        </div>
+        <h1 class="text-xl font-bold text-primary tracking-wide leading-tight">BHIKHARAM CHANDMAL</h1>
+        <p class="text-xs font-semibold text-secondary tracking-widest mt-1">ORDER MANAGEMENT SYSTEM</p>
+        <div class="inline-block mt-3 px-3 py-1 bg-amber-50 text-primary border border-amber-200 rounded-full text-[10px] font-bold uppercase tracking-wider">
+          Sales Representative Portal
+        </div>
+      </div>
+
+      <!-- Login Form inputs -->
+      <form id="user-login-form" class="space-y-4 relative z-10">
+        <!-- Username Input -->
+        <div>
+          <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 px-1">Username</label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 flex items-center pl-3">
+              <i data-lucide="user" class="text-slate-400 w-5 h-5"></i>
+            </span>
+            <input 
+              type="text" 
+              id="user-username" 
+              placeholder="Enter your username (e.g. anil_sales)" 
+              required
+              class="w-full pl-10 pr-3 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-slate-800 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary focus:bg-white outline-none transition"
+            >
+          </div>
+        </div>
+
+        <!-- Password Input -->
+        <div>
+          <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 px-1">Password</label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 flex items-center pl-3">
+              <i data-lucide="lock" class="text-slate-400 w-5 h-5"></i>
+            </span>
+            <input 
+              type="password" 
+              id="user-password" 
+              placeholder="Enter password" 
+              required
+              class="w-full pl-10 pr-12 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-slate-800 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary focus:bg-white outline-none transition"
+            >
+            <button 
+              type="button" 
+              id="toggle-password" 
+              class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 focus:outline-none"
+            >
+              <i data-lucide="eye" id="eye-icon" class="w-5 h-5"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Submit login button -->
+        <button 
+          type="submit" 
+          class="w-full bg-primary hover:bg-red-950 active:scale-[0.98] text-white py-3.5 px-4 rounded-2xl font-bold shadow-md hover:shadow-lg transition flex items-center justify-center gap-2 mt-2"
+        >
+          <span>Sign In to Book Orders</span>
+          <i data-lucide="arrow-right" class="w-4 h-4"></i>
+        </button>
+      </form>
+    </div>
+
+    <!-- Quick link to Admin Portal link -->
+    <a href="admin_login.html" class="mt-4 text-xs font-semibold text-primary hover:underline flex items-center gap-1">
+      <i data-lucide="shield" class="w-3.5 h-3.5"></i>
+      <span>Access Admin Console Portal</span>
+    </a>
+  </div>
+
+  <!-- Footer copyright line -->
+  <p class="text-center text-slate-400 text-xs py-4">
+    &copy; 2026 Bhikharam Chandmal. Booking System.
+  </p>
+
+  <!-- Script logic -->
+  <script type="module">
+    import { db, ref, set, get, DB_ROOT, showToast, showLoader, hideLoader, checkUserSession } from "./firebase-config.js";
+
+    document.addEventListener("DOMContentLoaded", async () => {
+      lucide.createIcons();
+
+      // Check if user is already logged in
+      showLoader();
+      try {
+        const session = await checkUserSession();
+        if (session) {
+          window.location.href = "user_dashboard.html";
+          return;
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        hideLoader();
+      }
+
+      const usernameInput = document.getElementById("user-username");
+      const passwordInput = document.getElementById("user-password");
+      const togglePasswordBtn = document.getElementById("toggle-password");
+      const eyeIcon = document.getElementById("eye-icon");
+      const loginForm = document.getElementById("user-login-form");
+
+      // Password Toggles
+      togglePasswordBtn.addEventListener("click", () => {
+        if (passwordInput.type === "password") {
+          passwordInput.type = "text";
+          eyeIcon.setAttribute("data-lucide", "eye-off");
+        } else {
+          passwordInput.type = "password";
+          eyeIcon.setAttribute("data-lucide", "eye");
+        }
+        lucide.createIcons();
+      });
+
+      // Handle submissions
+      loginForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const username = usernameInput.value.trim().toLowerCase();
+        const pwd = passwordInput.value.trim();
+
+        showLoader();
+        try {
+          const usersRef = ref(db, `${DB_ROOT}/users`);
+          const snapshot = await get(usersRef);
+
+          if (!snapshot.exists()) {
+            showToast("No sales users registered in system directory.", "error");
+            return;
+          }
+
+          const users = snapshot.val();
+          // Find user by username
+          const foundUserEntry = Object.entries(users).find(([id, u]) => u.username === username);
+
+          if (!foundUserEntry) {
+            showToast("Invalid username. Profile not found.", "error");
+            return;
+          }
+
+          const [userId, userObj] = foundUserEntry;
+
+          // Check status and password match
+          if (userObj.password !== pwd) {
+            showToast("Incorrect password. Try again.", "error");
+            return;
+          }
+
+          if (userObj.status !== "active") {
+            showToast("This salesperson account has been disabled. Contact Admin.", "error");
+            return;
+          }
+
+          // Successful Authorization - Establish Session
+          const sessionRef = ref(db, `${DB_ROOT}/sessions/${userId}`);
+          await set(sessionRef, {
+            login: true,
+            loginAt: Date.now()
+          });
+
+          // Save local credentials
+          localStorage.setItem("bkrm_userId", userId);
+          localStorage.setItem("bkrm_username", userObj.username);
+          localStorage.setItem("bkrm_name", userObj.name || userObj.username);
+
+          showToast(`Welcome back, ${userObj.name || 'User'}!`, "success");
+          
+          setTimeout(() => {
+            window.location.href = "user_dashboard.html";
+          }, 800);
+
+        } catch (error) {
+          console.error("User Login error: ", error);
+          showToast("Authentication Error: " + error.message, "error");
+        } finally {
+          hideLoader();
+        }
+      });
+    });
+  </script>
+</body>
+</html>

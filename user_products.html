@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Bhikharam Chandmal Products Catalog</title>
+  <!-- Google Fonts Poppins -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Tailwind CSS Play CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#7d0000',
+            secondary: '#ffd54a',
+            bgsoft: '#f7f4ec',
+          },
+          fontFamily: {
+            sans: ['Poppins', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-bgsoft font-sans min-h-screen text-slate-800 pb-32">
+
+  <!-- Sticky Header -->
+  <header class="sticky top-0 z-40 bg-primary text-white border-b-4 border-secondary shadow-md px-4 py-3 flex items-center justify-between font-sans">
+    <div class="flex items-center gap-2">
+      <a href="user_dashboard.html" class="w-9 h-9 hover:bg-black/20 rounded-xl flex items-center justify-center transition">
+        <i data-lucide="chevron-left" class="text-secondary w-6 h-6"></i>
+      </a>
+      <div>
+        <h1 id="store-title-label" class="text-sm font-bold tracking-wide truncate max-w-[200px]">Store Catalog</h1>
+        <p class="text-[9px] uppercase font-semibold text-secondary tracking-widest leading-none mt-0.5">Book Order items</p>
+      </div>
+    </div>
+    
+    <div class="flex items-center gap-2">
+      <div class="flex items-center gap-1 bg-[#ffd54a]/10 border border-[#ffd54a]/30 px-2 py-0.5 rounded-full shrink-0">
+        <i data-lucide="shopping-cart" class="w-3.5 h-3.5 text-secondary"></i>
+        <span id="cart-qty-badge" class="text-[10px] text-secondary font-bold">0</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-md mx-auto p-4 space-y-4">
+    <!-- Search Bar -->
+    <div class="relative">
+      <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+        <i data-lucide="search" class="text-slate-400 w-5 h-5"></i>
+      </span>
+      <input 
+        type="text" 
+        id="search-input" 
+        placeholder="Search products in this store..." 
+        class="w-full pl-10 pr-10 py-3 bg-white border border-rose-950/5 rounded-2xl text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-xs transition"
+      >
+      <button 
+        id="clear-search" 
+        class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600 hidden"
+      >
+        <i data-lucide="x" class="w-4 h-4"></i>
+      </button>
+    </div>
+
+    <!-- Active Products Count Badge -->
+    <div class="flex justify-between items-center text-xs text-slate-500 font-semibold uppercase tracking-wider px-1">
+      <span>Catalog Listings</span>
+      <span id="product-count-badge" class="bg-primary/5 text-primary px-2.5 py-0.5 rounded-full">0 items</span>
+    </div>
+
+    <!-- Loading spinner -->
+    <div id="products-spinner" class="py-12 flex justify-center">
+      <div class="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent"></div>
+    </div>
+
+    <!-- Products Cards List -->
+    <div id="products-list" class="space-y-3.5">
+      <!-- Injected products rendered here -->
+    </div>
+
+    <!-- Empty State -->
+    <div id="empty-state" class="hidden text-center py-16 bg-white rounded-3xl p-6 border border-rose-950/5">
+      <div class="w-16 h-16 bg-slate-50 text-slate-400 rounded-full flex items-center justify-center mx-auto mb-3">
+        <i data-lucide="package-x" class="w-8 h-8"></i>
+      </div>
+      <p class="font-bold text-slate-700 text-sm">No products found</p>
+      <p class="text-xs text-slate-400 mt-1">There are no products listed for this store catalog currently.</p>
+    </div>
+  </main>
+
+  <!-- Sticky Bottom Cart checkout prompt Bar -->
+  <div id="sticky-cart-bar" class="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-primary text-white border-t-4 border-secondary shadow-2xl p-4 flex items-center justify-between z-40 transform translate-y-full transition-transform duration-300">
+    <div class="flex items-center gap-3">
+      <div class="w-11 h-11 rounded-xl bg-white/10 flex items-center justify-center border border-secondary/30 relative">
+        <i data-lucide="shopping-cart" class="text-secondary w-5 h-5"></i>
+        <div id="sticky-cart-count" class="absolute -top-1.5 -right-1.5 bg-secondary text-primary font-bold text-[9px] w-5 h-5 rounded-full flex items-center justify-center border border-primary">0</div>
+      </div>
+      <div>
+        <div class="text-[10px] text-rose-200 font-bold uppercase tracking-wider">Shopping Basket</div>
+        <div id="sticky-cart-total" class="text-sm font-black text-secondary mt-0.5">₹0.00</div>
+      </div>
+    </div>
+    
+    <button 
+      id="checkout-btn" 
+      class="bg-secondary text-primary hover:bg-yellow-400 font-black text-xs px-5 py-3 rounded-xl transition active:scale-[0.98] shadow flex items-center gap-1.5 shrink-0"
+    >
+      <span>Proceed to Checkout</span>
+      <i data-lucide="chevron-right" class="w-4 h-4"></i>
+    </button>
+  </div>
+
+  <!-- Script logic -->
+  <script type="module">
+    import { 
+      db, 
+      ref, 
+      get, 
+      set, 
+      remove, 
+      onValue, 
+      DB_ROOT, 
+      checkUserSession, 
+      showToast 
+    } from "./firebase-config.js";
+
+    // Recover Store parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const storeId = urlParams.get("storeId");
+
+    let verifiedUser = null;
+    let storeDetails = null;
+    let allProducts = {};
+    let cartMap = {};
+    let activeSearchText = "";
+
+    document.addEventListener("DOMContentLoaded", async () => {
+      lucide.createIcons();
+
+      // Check parameters
+      if (!storeId) {
+        window.location.href = "user_dashboard.html";
+        return;
+      }
+
+      // Check User Sessions
+      verifiedUser = await checkUserSession();
+      if (!verifiedUser) {
+        window.location.href = "user_login.html";
+        return;
+      }
+
+      // DOM bindings
+      const storeTitleLabel = document.getElementById("store-title-label");
+      const cartQtyBadge = document.getElementById("cart-qty-badge");
+      const searchInput = document.getElementById("search-input");
+      const clearSearchBtn = document.getElementById("clear-search");
+      const productsList = document.getElementById("products-list");
+      const emptyState = document.getElementById("empty-state");
+      const productCountBadge = document.getElementById("product-count-badge");
+      const spinner = document.getElementById("products-spinner");
+      
+      const stickyCartBar = document.getElementById("sticky-cart-bar");
+      const stickyCartCount = document.getElementById("sticky-cart-count");
+      const stickyCartTotal = document.getElementById("sticky-cart-total");
+      const checkoutBtn = document.getElementById("checkout-btn");
+
+      // 1. Fetch store details immediately
+      try {
+        const storeSnap = await get(ref(db, `${DB_ROOT}/stores/${storeId}`));
+        if (storeSnap.exists()) {
+          storeDetails = storeSnap.val();
+          storeTitleLabel.innerText = storeDetails.name;
+        } else {
+          showToast("Catalog error: Store configuration not found.", "error");
+          setTimeout(() => window.location.href = "user_dashboard.html", 1500);
+          return;
+        }
+      } catch (err) {
+        console.error("Store detail load failure:", err);
+      }
+
+      // 2. Setup RTDB listener for active User's Cart
+      const cartRef = ref(db, `${DB_ROOT}/carts/${verifiedUser.userId}`);
+      onValue(cartRef, (snapshot) => {
+        if (snapshot.exists()) {
+          cartMap = snapshot.val();
+        } else {
+          cartMap = {};
+        }
+        updateStickyCartBar();
+        renderProducts();
+      });
+
+      // 3. Setup RTDB listener for products catalog belonging to this store
+      const prodRef = ref(db, `${DB_ROOT}/products`);
+      onValue(prodRef, (snapshot) => {
+        spinner.classList.add("hidden");
+        if (snapshot.exists()) {
+          allProducts = {};
+          const fullCatalog = snapshot.val();
+          // Products are universal: grab all products in catalog
+          Object.entries(fullCatalog).forEach(([pid, prod]) => {
+            allProducts[pid] = prod;
+          });
+        } else {
+          allProducts = {};
+        }
+        renderProducts();
+      }, (error) => {
+        spinner.classList.add("hidden");
+        console.error(error);
+        showToast("Failed to fetch product list: " + error.message, "error");
+      });
+
+      // Render product lists
+      function renderProducts() {
+        productsList.innerHTML = "";
+        const pEntries = Object.entries(allProducts);
+
+        let filtered = pEntries;
+        if (activeSearchText) {
+          filtered = pEntries.filter(([id, p]) => {
+            const nameMatch = p.name && p.name.toLowerCase().includes(activeSearchText.toLowerCase());
+            const descMatch = p.description && p.description.toLowerCase().includes(activeSearchText.toLowerCase());
+            return nameMatch || descMatch;
+          });
+        }
+
+        productCountBadge.innerText = `${filtered.length} items`;
+
+        if (filtered.length === 0) {
+          emptyState.classList.remove("hidden");
+          return;
+        }
+
+        emptyState.classList.add("hidden");
+
+        // Sort products by name
+        filtered.sort((a,b) => (a[1].name || "").localeCompare(b[1].name || ""));
+
+        filtered.forEach(([pid, prod]) => {
+          const productCard = document.createElement("div");
+          productCard.className = "bg-white rounded-3xl p-3.5 border border-rose-950/5 shadow-xs flex gap-3.5 relative overflow-hidden transition hover:shadow-sm";
+          
+          const defaultProdImgHtml = prod.imageUrl 
+            ? `<img src="${prod.imageUrl}" class="w-20 h-20 rounded-2xl object-cover shrink-0 border border-slate-100 select-none">`
+            : `
+              <div class="w-20 h-20 rounded-2xl bg-amber-50 flex flex-col items-center justify-center shrink-0 border border-amber-100 select-none">
+                <i data-lucide="package" class="text-primary/45 w-7 h-7"></i>
+              </div>
+            `;
+
+          const stockNum = Number(prod.stock || 0);
+          const cartItem = cartMap[pid];
+          const currentQty = cartItem ? cartItem.qty : 0;
+
+          let stockStatusHtml = "";
+          let controlHtml = "";
+
+          // Constraints evaluation
+          if (stockNum <= 0) {
+            stockStatusHtml = `<span class="bg-rose-50 text-rose-700 text-[10px] font-bold border border-rose-200 px-2 py-0.5 rounded-md uppercase">Out Of Stock</span>`;
+            controlHtml = `
+              <button 
+                disabled 
+                class="bg-slate-100 text-slate-400 text-[10px] font-black px-4 py-2 rounded-xl cursor-not-allowed border select-none leading-none pr-3 pl-3"
+              >
+                OUT OF STOCK
+              </button>
+            `;
+          } else {
+            // Inside stock limits
+            if (stockNum <= 5) {
+              stockStatusHtml = `<span class="bg-amber-50 text-amber-700 text-[10px] font-bold border border-amber-200 px-2 py-0.5 rounded-md uppercase">Only ${stockNum} Left</span>`;
+            } else {
+              stockStatusHtml = `<span class="bg-slate-50 text-slate-400 text-[10px] font-bold border border-slate-200 px-2 py-0.5 rounded-md uppercase">${stockNum} Available</span>`;
+            }
+
+            if (currentQty === 0) {
+              controlHtml = `
+                <button 
+                  class="add-to-cart-btn bg-primary hover:bg-rose-950 active:scale-[0.96] text-white font-bold text-xs px-4 py-2 rounded-xl transition flex items-center gap-1 shadow-xs pr-3 pl-3"
+                  data-id="${pid}"
+                >
+                  <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                  <span>Add To Cart</span>
+                </button>
+              `;
+            } else {
+              controlHtml = `
+                <div class="flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-xl p-1 shrink-0">
+                  <button 
+                    class="qty-minus-btn w-7 h-7 bg-white rounded-lg hover:bg-slate-100 flex items-center justify-center font-bold text-sm text-slate-700 border shadow-xs select-none transition" 
+                    data-id="${pid}"
+                  >
+                    &minus;
+                  </button>
+                  <span class="text-xs font-bold text-slate-800 tracking-wider">${currentQty}</span>
+                  <button 
+                    class="qty-plus-btn w-7 h-7 bg-white rounded-lg hover:bg-slate-100 flex items-center justify-center font-bold text-sm text-slate-700 border shadow-xs select-none transition" 
+                    data-id="${pid}"
+                  >
+                    &plus;
+                  </button>
+                </div>
+              `;
+            }
+          }
+
+          productCard.innerHTML = `
+            ${defaultProdImgHtml}
+            <div class="flex-1 flex flex-col justify-between min-w-0">
+              <div>
+                <div class="flex items-start justify-between gap-1.5">
+                  <h4 class="font-extrabold text-slate-800 text-sm tracking-wide leading-tight truncate mr-2" title="${prod.name}">${prod.name}</h4>
+                  <span class="text-primary font-extrabold text-sm shrink-0">₹${parseFloat(prod.price).toFixed(2)}</span>
+                </div>
+                <p class="text-[10px] text-slate-400 line-clamp-2 mt-1 pr-4" title="${prod.description}">${prod.description || "Fresh and crispy premium bite-sized packing."}</p>
+              </div>
+
+              <!-- controls & details -->
+              <div class="flex items-center justify-between gap-2 mt-2">
+                ${stockStatusHtml}
+                ${controlHtml}
+              </div>
+            </div>
+          `;
+
+          productsList.appendChild(productCard);
+        });
+
+        lucide.createIcons();
+
+        // Attach action handlers
+        document.querySelectorAll(".add-to-cart-btn").forEach(btn => {
+          btn.onclick = (e) => {
+            const id = e.currentTarget.getAttribute("data-id");
+            handleAddAction(id);
+          };
+        });
+
+        document.querySelectorAll(".qty-plus-btn").forEach(btn => {
+          btn.onclick = (e) => {
+            const id = e.currentTarget.getAttribute("data-id");
+            handleIncrementAction(id);
+          };
+        });
+
+        document.querySelectorAll(".qty-minus-btn").forEach(btn => {
+          btn.onclick = (e) => {
+            const id = e.currentTarget.getAttribute("data-id");
+            handleDecrementAction(id);
+          };
+        });
+      }
+
+      // Add to Cart handler
+      async function handleAddAction(pid) {
+        const prodObj = allProducts[pid];
+        if (!prodObj) return;
+
+        // Check if stock is 0
+        const maxStock = Number(prodObj.stock || 0);
+        if (maxStock <= 0) {
+          showToast("Oops: Product is currently out of stock!", "error");
+          return;
+        }
+
+        try {
+          const itemRef = ref(db, `${DB_ROOT}/carts/${verifiedUser.userId}/${pid}`);
+          await set(itemRef, {
+            productId: pid,
+            name: prodObj.name,
+            price: parseFloat(prodObj.price),
+            qty: 1,
+            imageUrl: prodObj.imageUrl || ""
+          });
+          showToast("Added to checkout cart!", "success");
+        } catch (err) {
+          showToast("Cart Error: " + err.message, "error");
+        }
+      }
+
+      // Decrement shopping cart volumes
+      async function handleDecrementAction(pid) {
+        const cartItem = cartMap[pid];
+        if (!cartItem) return;
+
+        const nextVal = currentQuantity(pid) - 1;
+        try {
+          const itemRef = ref(db, `${DB_ROOT}/carts/${verifiedUser.userId}/${pid}`);
+          if (nextVal <= 0) {
+            await remove(itemRef);
+            showToast("Removed from cart.", "amber");
+          } else {
+            await set(itemRef, {
+              ...cartItem,
+              qty: nextVal
+            });
+          }
+        } catch (err) {
+          showToast("Cart Error: " + err.message, "error");
+        }
+      }
+
+      // Increment shopping cart volumes
+      async function handleIncrementAction(pid) {
+        const prodObj = allProducts[pid];
+        const cartItem = cartMap[pid];
+        if (!prodObj || !cartItem) return;
+
+        const maxStock = Number(prodObj.stock || 0);
+        const nextVal = currentQuantity(pid) + 1;
+
+        if (nextVal > maxStock) {
+          showToast(`Only ${maxStock} item(s) available in inventory!`, "error");
+          return;
+        }
+
+        try {
+          const itemRef = ref(db, `${DB_ROOT}/carts/${verifiedUser.userId}/${pid}`);
+          await set(itemRef, {
+            ...cartItem,
+            qty: nextVal
+          });
+        } catch (err) {
+          showToast("Cart Error: " + err.message, "error");
+        }
+      }
+
+      function currentQuantity(pid) {
+        return cartMap[pid] ? cartMap[pid].qty : 0;
+      }
+
+      // Keep cart summary widgets updated
+      function updateStickyCartBar() {
+        const items = Object.values(cartMap);
+        let totalQty = 0;
+        let cumulativeSum = 0;
+
+        items.forEach(item => {
+          totalQty += item.qty;
+          cumulativeSum += item.price * item.qty;
+        });
+
+        cartQtyBadge.innerText = totalQty;
+        stickyCartCount.innerText = totalQty;
+        stickyCartTotal.innerText = `₹${cumulativeSum.toFixed(2)}`;
+
+        // Expand or shrink bar depending on cart emptiness
+        if (totalQty > 0) {
+          stickyCartBar.classList.remove("translate-y-full");
+        } else {
+          stickyCartBar.classList.add("translate-y-full");
+        }
+      }
+
+      // Redirect button checkout actions
+      checkoutBtn.onclick = () => {
+        window.location.href = `user_checkout.html?storeId=${storeId}`;
+      };
+
+      // Search filters logic
+      searchInput.oninput = (e) => {
+        activeSearchText = e.target.value;
+        if (activeSearchText) {
+          clearSearchBtn.classList.remove("hidden");
+        } else {
+          clearSearchBtn.classList.add("hidden");
+        }
+        renderProducts();
+      };
+
+      clearSearchBtn.onclick = () => {
+        searchInput.value = "";
+        activeSearchText = "";
+        clearSearchBtn.classList.add("hidden");
+        renderProducts();
+      };
+    });
+  </script>
+</body>
+</html>

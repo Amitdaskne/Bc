@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Bhikharam Chandmal Admin Dashboard</title>
+  <!-- Google Fonts Poppins -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Tailwind CSS Play CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#7d0000',
+            secondary: '#ffd54a',
+            bgsoft: '#f7f4ec',
+          },
+          fontFamily: {
+            sans: ['Poppins', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-bgsoft font-sans min-h-screen text-slate-800 pb-24">
+
+  <!-- Sticky Header -->
+  <header class="sticky top-0 z-40 bg-primary text-white border-b-4 border-secondary shadow-md px-4 py-3 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center border border-secondary/40">
+        <i data-lucide="shield" class="text-secondary w-5 h-5"></i>
+      </div>
+      <div>
+        <h1 class="text-sm font-bold tracking-wider leading-tight">BHIKHARAM CHANDMAL</h1>
+        <p class="text-[10px] font-semibold text-secondary tracking-widest uppercase">Admin Operations</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-2">
+      <button 
+        id="logout-btn" 
+        class="bg-red-950 hover:bg-black/20 text-white rounded-xl text-xs px-3 py-2 border border-red-900 flex items-center gap-1.5 font-semibold transition"
+      >
+        <i data-lucide="log-out" class="w-3.5 h-3.5 text-secondary"></i>
+        <span>Logout</span>
+      </button>
+    </div>
+  </header>
+
+  <main class="max-w-md mx-auto p-4 space-y-6">
+    <!-- Welcome section -->
+    <div class="bg-gradient-to-r from-primary to-rose-950 rounded-3xl p-6 text-white shadow-xl relative overflow-hidden">
+      <!-- Decor circle -->
+      <div class="absolute -right-6 -bottom-6 w-24 h-24 bg-white/5 rounded-full"></div>
+      <div class="absolute -left-12 -top-12 w-32 h-32 bg-secondary/5 rounded-full blur-xl"></div>
+      
+      <div class="relative z-10 space-y-2">
+        <div class="text-[10px] bg-secondary/20 text-secondary border border-secondary/30 rounded-full py-1 px-3 inline-block font-semibold uppercase tracking-wider">
+          Live Database Connected
+        </div>
+        <h2 class="text-xl font-bold tracking-tight">Welcome, Administrator</h2>
+        <p id="admin-info" class="text-xs text-rose-200">amitdaskishanganj@gmail.com</p>
+      </div>
+    </div>
+
+    <!-- Live Statistics Container -->
+    <div class="space-y-3">
+      <h3 class="text-xs font-bold text-slate-500 uppercase tracking-widest pl-1">Live Statistics</h3>
+      <div class="grid grid-cols-2 gap-3">
+        <!-- Users stat -->
+        <div class="bg-white rounded-2xl p-4 border border-rose-950/5 shadow-sm flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 shrink-0">
+            <i data-lucide="users" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <div class="text-xs text-slate-400 font-medium">Total Users</div>
+            <div id="stat-users" class="text-base font-bold text-slate-800">...</div>
+          </div>
+        </div>
+        <!-- Stores stat -->
+        <div class="bg-white rounded-2xl p-4 border border-rose-950/5 shadow-sm flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 shrink-0">
+            <i data-lucide="store" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <div class="text-xs text-slate-400 font-medium">Total Stores</div>
+            <div id="stat-stores" class="text-base font-bold text-slate-800">...</div>
+          </div>
+        </div>
+        <!-- Products stat -->
+        <div class="bg-white rounded-2xl p-4 border border-rose-950/5 shadow-sm flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600 shrink-0">
+            <i data-lucide="package" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <div class="text-xs text-slate-400 font-medium">Products</div>
+            <div id="stat-products" class="text-base font-bold text-slate-800">...</div>
+          </div>
+        </div>
+        <!-- Orders stat -->
+        <div class="bg-white rounded-2xl p-4 border border-rose-950/5 shadow-sm flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center text-purple-600 shrink-0">
+            <i data-lucide="shopping-bag" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <div class="text-xs text-slate-400 font-medium">Total Orders</div>
+            <div id="stat-orders" class="text-base font-bold text-slate-800">...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Navigation Links -->
+    <div class="space-y-3">
+      <h3 class="text-xs font-bold text-slate-500 uppercase tracking-widest pl-1">Management Consoles</h3>
+      
+      <div class="space-y-3">
+        <!-- Users navigation node -->
+        <a href="admin_users.html" class="bg-white hover:bg-slate-50 active:scale-[0.99] rounded-2xl p-4 border border-rose-950/5 shadow-sm flex items-center justify-between transition group">
+          <div class="flex items-center gap-3">
+            <div class="w-12 h-12 bg-[#7d0000]/5 text-primary rounded-xl flex items-center justify-center">
+              <i data-lucide="users-round" class="w-6 h-6"></i>
+            </div>
+            <div>
+              <h4 class="font-bold text-slate-800 text-sm">Users Management</h4>
+              <p class="text-[11px] text-slate-400">Add, edit, enable/disable system users</p>
+            </div>
+          </div>
+          <div class="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 group-hover:text-primary transition">
+            <i data-lucide="chevron-right" class="w-4 h-4"></i>
+          </div>
+        </a>
+
+        <!-- Stores navigation node -->
+        <a href="admin_stores.html" class="bg-white hover:bg-slate-50 active:scale-[0.99] rounded-2xl p-4 border border-rose-950/5 shadow-sm flex items-center justify-between transition group">
+          <div class="flex items-center gap-3">
+            <div class="w-12 h-12 bg-emerald-50 text-emerald-700 rounded-xl flex items-center justify-center">
+              <i data-lucide="store" class="w-6 h-6"></i>
+            </div>
+            <div>
+              <h4 class="font-bold text-slate-800 text-sm">Stores directory</h4>
+              <p class="text-[11px] text-slate-400">Coordinate official partner stores</p>
+            </div>
+          </div>
+          <div class="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 group-hover:text-emerald-700 transition">
+            <i data-lucide="chevron-right" class="w-4 h-4"></i>
+          </div>
+        </a>
+
+        <!-- Products navigation node -->
+        <a href="admin_products.html" class="bg-white hover:bg-slate-50 active:scale-[0.99] rounded-2xl p-4 border border-rose-950/5 shadow-sm flex items-center justify-between transition group">
+          <div class="flex items-center gap-3">
+            <div class="w-12 h-12 bg-amber-50 text-amber-700 rounded-xl flex items-center justify-center">
+              <i data-lucide="package-search" class="w-6 h-6"></i>
+            </div>
+            <div>
+              <h4 class="font-bold text-slate-800 text-sm">Products Catalog</h4>
+              <p class="text-[11px] text-slate-400">Inventory control and product imaging</p>
+            </div>
+          </div>
+          <div class="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 group-hover:text-amber-700 transition">
+            <i data-lucide="chevron-right" class="w-4 h-4"></i>
+          </div>
+        </a>
+
+        <!-- Assignments navigation node -->
+        <a href="admin_assignments.html" class="bg-white hover:bg-slate-50 active:scale-[0.99] rounded-2xl p-4 border border-rose-950/5 shadow-sm flex items-center justify-between transition group">
+          <div class="flex items-center gap-3">
+            <div class="w-12 h-12 bg-indigo-50 text-indigo-700 rounded-xl flex items-center justify-center">
+              <i data-lucide="link-2" class="w-6 h-6"></i>
+            </div>
+            <div>
+              <h4 class="font-bold text-slate-800 text-sm">Store Assignments</h4>
+              <p class="text-[11px] text-slate-400">Assign specific stores to user profiles</p>
+            </div>
+          </div>
+          <div class="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 group-hover:text-indigo-700 transition">
+            <i data-lucide="chevron-right" class="w-4 h-4"></i>
+          </div>
+        </a>
+
+        <!-- Orders tracker navigation node -->
+        <a href="admin_orders.html" class="bg-white hover:bg-slate-50 active:scale-[0.99] rounded-2xl p-4 border border-rose-950/5 shadow-sm flex items-center justify-between transition group">
+          <div class="flex items-center gap-3">
+            <div class="w-12 h-12 bg-purple-50 text-purple-700 rounded-xl flex items-center justify-center">
+              <i data-lucide="truck" class="w-6 h-6"></i>
+            </div>
+            <div>
+              <h4 class="font-bold text-slate-800 text-sm">Orders & Payments console</h4>
+              <p class="text-[11px] text-slate-400">Authorize orders, edit status & down payments</p>
+            </div>
+          </div>
+          <div class="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 group-hover:text-purple-700 transition">
+            <i data-lucide="chevron-right" class="w-4 h-4"></i>
+          </div>
+        </a>
+      </div>
+    </div>
+  </main>
+
+  <!-- Script logic -->
+  <script type="module">
+    import { 
+      db, 
+      ref, 
+      get, 
+      child, 
+      DB_ROOT, 
+      checkAdminSession, 
+      logoutAdmin, 
+      showLoader, 
+      hideLoader 
+    } from "./firebase-config.js";
+
+    document.addEventListener("DOMContentLoaded", async () => {
+      // Create Icons
+      lucide.createIcons();
+
+      // Session Verification
+      showLoader();
+      const verifiedSession = await checkAdminSession();
+      if (!verifiedSession) {
+        window.location.href = "admin_login.html";
+        return;
+      }
+      
+      try {
+        // Fetch stats
+        const rootRef = ref(db, DB_ROOT);
+        const snapshot = await get(rootRef);
+        
+        let userCount = 0;
+        let storeCount = 0;
+        let productCount = 0;
+        let orderCount = 0;
+
+        if (snapshot.exists()) {
+          const data = snapshot.val();
+          if (data.users) userCount = Object.keys(data.users).length;
+          if (data.stores) storeCount = Object.keys(data.stores).length;
+          if (data.products) productCount = Object.keys(data.products).length;
+          if (data.orders) orderCount = Object.keys(data.orders).length;
+        }
+
+        document.getElementById("stat-users").innerText = userCount;
+        document.getElementById("stat-stores").innerText = storeCount;
+        document.getElementById("stat-products").innerText = productCount;
+        document.getElementById("stat-orders").innerText = orderCount;
+
+      } catch (error) {
+        console.error("Failed to load statistics:", error);
+      } finally {
+        hideLoader();
+      }
+
+      // Logout handler
+      document.getElementById("logout-btn").addEventListener("click", () => {
+        logoutAdmin();
+      });
+    });
+  </script>
+</body>
+</html>

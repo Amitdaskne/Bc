@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Bhikharam Chandmal Admin Users</title>
+  <!-- Google Fonts Poppins -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Tailwind CSS Play CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#7d0000',
+            secondary: '#ffd54a',
+            bgsoft: '#f7f4ec',
+          },
+          fontFamily: {
+            sans: ['Poppins', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-bgsoft font-sans min-h-screen text-slate-800 pb-24">
+
+  <!-- Sticky Header -->
+  <header class="sticky top-0 z-40 bg-primary text-white border-b-4 border-secondary shadow-md px-4 py-3 flex items-center justify-between">
+    <div class="flex items-center gap-2">
+      <a href="admin_dashboard.html" class="w-9 h-9 hover:bg-black/20 rounded-xl flex items-center justify-center transition">
+        <i data-lucide="chevron-left" class="text-secondary w-6 h-6"></i>
+      </a>
+      <div>
+        <h1 class="text-sm font-bold tracking-wider leading-tight">MANAGE USERS</h1>
+        <p class="text-[10px] font-semibold text-secondary tracking-widest uppercase">Admin Operations</p>
+      </div>
+    </div>
+    <button 
+      id="open-add-dialog" 
+      class="bg-secondary text-primary font-bold hover:bg-yellow-400 active:scale-[0.97] rounded-xl text-xs px-3 py-2 flex items-center gap-1.5 shadow"
+    >
+      <i data-lucide="user-plus" class="w-4 h-4"></i>
+      <span>Add User</span>
+    </button>
+  </header>
+
+  <main class="max-w-md mx-auto p-4 space-y-4">
+    <!-- Search Bar -->
+    <div class="relative">
+      <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+        <i data-lucide="search" class="text-slate-400 w-5 h-5"></i>
+      </span>
+      <input 
+        type="text" 
+        id="search-input" 
+        placeholder="Search users by name or username..." 
+        class="w-full pl-10 pr-10 py-3 bg-white border border-rose-950/5 rounded-2xl text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-xs transition"
+      >
+      <button 
+        id="clear-search" 
+        class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600 hidden"
+      >
+        <i data-lucide="x" class="w-4 h-4"></i>
+      </button>
+    </div>
+
+    <!-- Active Users Count Display -->
+    <div class="flex justify-between items-center text-xs text-slate-500 font-semibold uppercase tracking-wider px-1">
+      <span>Users List</span>
+      <span id="user-count-badge" class="bg-primary/5 text-primary px-2.5 py-0.5 rounded-full">0 Users</span>
+    </div>
+
+    <!-- Loader placeholder -->
+    <div id="users-spinner" class="py-12 flex justify-center">
+      <div class="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent"></div>
+    </div>
+
+    <!-- Users Container list -->
+    <div id="users-list" class="space-y-3">
+      <!-- Injected users cards go here -->
+    </div>
+
+    <!-- Empty State -->
+    <div id="empty-state" class="hidden text-center py-12 bg-white rounded-3xl p-6 border border-rose-950/5">
+      <div class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-3">
+        <i data-lucide="users" class="text-slate-400 w-8 h-8"></i>
+      </div>
+      <p class="font-bold text-slate-700 text-sm">No users found</p>
+      <p class="text-xs text-slate-400 mt-1">Try refining your search queries or add a new user profile.</p>
+    </div>
+  </main>
+
+  <!-- POPUP: Create / Edit User Modal Dialog -->
+  <div id="user-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-3xl shadow-xl w-full max-w-sm max-h-[90vh] overflow-y-auto transform transition scale-95 duration-200">
+      
+      <!-- Modal Header -->
+      <div class="bg-primary px-6 py-4 flex items-center justify-between text-white border-b border-rose-950/10">
+        <h3 id="modal-title" class="font-bold text-base tracking-wide">Create User</h3>
+        <button id="close-modal" class="w-8 h-8 hover:bg-black/10 rounded-lg flex items-center justify-center transition">
+          <i data-lucide="x" class="text-white w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <form id="user-form" class="p-6 space-y-4">
+        <input type="hidden" id="form-user-id">
+
+        <!-- DP Upload Field -->
+        <div class="flex flex-col items-center gap-3">
+          <div class="relative w-20 h-20 rounded-full border-2 border-slate-200 overflow-hidden bg-slate-100 flex items-center justify-center">
+            <img id="form-dp-preview" class="w-full h-full object-cover hidden" alt="DP Image">
+            <i data-lucide="user" id="form-dp-placeholder" class="text-slate-400 w-10 h-10"></i>
+            <div id="uploading-overlay" class="absolute inset-0 bg-black/60 flex items-center justify-center hidden">
+              <div class="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+            </div>
+          </div>
+          <label class="cursor-pointer bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl px-4 py-1.5 text-xs font-semibold select-none border border-slate-200 transition">
+            <span>Upload Photo</span>
+            <input type="file" id="form-file-input" accept="image/*" class="hidden">
+          </label>
+          <input type="hidden" id="form-dp-url" value="">
+        </div>
+
+        <!-- Name Field -->
+        <div>
+          <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Full Name</label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 flex items-center pl-3">
+              <i data-lucide="text" class="text-slate-400 w-4.5 h-4.5"></i>
+            </span>
+            <input 
+              type="text" 
+              id="form-name" 
+              placeholder="e.g. Ramesh Kumar" 
+              required
+              class="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-xs focus:ring-2 focus:ring-primary/20 outline-none transition"
+            >
+          </div>
+        </div>
+
+        <!-- Username Field -->
+        <div>
+          <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Username</label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 flex items-center pl-3">
+              <i data-lucide="user" class="text-slate-400 w-4.5 h-4.5"></i>
+            </span>
+            <input 
+              type="text" 
+              id="form-username" 
+              placeholder="e.g. ramesh_bkrm" 
+              required
+              class="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-xs focus:ring-2 focus:ring-primary/20 outline-none transition"
+            >
+          </div>
+        </div>
+
+        <!-- Password Field -->
+        <div>
+          <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Password</label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 flex items-center pl-3">
+              <i data-lucide="lock" class="text-slate-400 w-4.5 h-4.5"></i>
+            </span>
+            <input 
+              type="text" 
+              id="form-password" 
+              placeholder="Set password (e.g. 12345)" 
+              required
+              class="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-xs focus:ring-2 focus:ring-primary/20 outline-none transition"
+            >
+          </div>
+        </div>
+
+        <!-- Mobile Field -->
+        <div>
+          <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Mobile Number</label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 flex items-center pl-3">
+              <i data-lucide="phone" class="text-slate-400 w-4.5 h-4.5"></i>
+            </span>
+            <input 
+              type="tel" 
+              id="form-mobile" 
+              placeholder="e.g. 9876543210" 
+              required
+              class="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-xs focus:ring-2 focus:ring-primary/20 outline-none transition"
+            >
+          </div>
+        </div>
+
+        <!-- User Status Dropdown -->
+        <div>
+          <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Profile Status</label>
+          <select 
+            id="form-status" 
+            class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-xs focus:outline-none focus:ring-2 focus:ring-primary/20 transition"
+          >
+            <option value="active">Active (Enabled)</option>
+            <option value="disabled">Disabled (No Login Access)</option>
+          </select>
+        </div>
+
+        <!-- Submit Button -->
+        <button 
+          type="submit" 
+          id="form-submit-btn" 
+          class="w-full bg-primary hover:bg-rose-950 active:scale-[0.97] text-white py-3 px-4 rounded-xl font-bold text-xs shadow-md transition flex items-center justify-center gap-1.5 pt-2.5 pb-2.5"
+        >
+          <i data-lucide="save" class="w-4 h-4"></i>
+          <span>Save User Profile</span>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Bottom navigation as requested -->
+  <nav class="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-rose-950/5 shadow-lg max-w-md mx-auto flex items-center justify-around py-2 px-1">
+    <a href="admin_dashboard.html" class="flex flex-col items-center text-slate-400 hover:text-primary transition py-1">
+      <i data-lucide="home" class="w-5 h-5"></i>
+      <span class="text-[9px] font-semibold mt-0.5">Home</span>
+    </a>
+    <a href="admin_users.html" class="flex flex-col items-center text-primary transition py-1">
+      <i data-lucide="users" class="w-5 h-5"></i>
+      <span class="text-[9px] font-bold mt-0.5">Users</span>
+    </a>
+    <a href="admin_stores.html" class="flex flex-col items-center text-slate-400 hover:text-primary transition py-1">
+      <i data-lucide="store" class="w-5 h-5"></i>
+      <span class="text-[9px] font-semibold mt-0.5">Stores</span>
+    </a>
+    <a href="admin_products.html" class="flex flex-col items-center text-slate-400 hover:text-primary transition py-1">
+      <i data-lucide="package" class="w-5 h-5"></i>
+      <span class="text-[9px] font-semibold mt-0.5">Products</span>
+    </a>
+    <a href="admin_orders.html" class="flex flex-col items-center text-slate-400 hover:text-primary transition py-1">
+      <i data-lucide="shopping-bag" class="w-5 h-5"></i>
+      <span class="text-[9px] font-semibold mt-0.5">Orders</span>
+    </a>
+  </nav>
+
+  <!-- Script logic -->
+  <script type="module">
+    import { 
+      db, 
+      ref, 
+      set, 
+      get, 
+      child, 
+      update, 
+      remove, 
+      onValue, 
+      push, 
+      DB_ROOT, 
+      checkAdminSession, 
+      showToast, 
+      uploadImageToCloudinary 
+    } from "./firebase-config.js";
+
+    let allUsers = {};
+    let activeSearchText = "";
+
+    document.addEventListener("DOMContentLoaded", async () => {
+      lucide.createIcons();
+
+      // Session Check
+      const verified = await checkAdminSession();
+      if (!verified) {
+        window.location.href = "admin_login.html";
+        return;
+      }
+
+      // Dialog Elements
+      const addBtn = document.getElementById("open-add-dialog");
+      const userModal = document.getElementById("user-modal");
+      const closeModal = document.getElementById("close-modal");
+      const userForm = document.getElementById("user-form");
+      const modalTitle = document.getElementById("modal-title");
+      
+      const formUserId = document.getElementById("form-user-id");
+      const formName = document.getElementById("form-name");
+      const formUsername = document.getElementById("form-username");
+      const formPassword = document.getElementById("form-password");
+      const formMobile = document.getElementById("form-mobile");
+      const formStatus = document.getElementById("form-status");
+      const formDpUrl = document.getElementById("form-dp-url");
+      const fileInput = document.getElementById("form-file-input");
+      
+      const formDpPreview = document.getElementById("form-dp-preview");
+      const formDpPlaceholder = document.getElementById("form-dp-placeholder");
+      const uploadingOverlay = document.getElementById("uploading-overlay");
+
+      // Search & List Elements
+      const searchInput = document.getElementById("search-input");
+      const clearSearchBtn = document.getElementById("clear-search");
+      const usersList = document.getElementById("users-list");
+      const emptyState = document.getElementById("empty-state");
+      const userCountBadge = document.getElementById("user-count-badge");
+      const usersSpinner = document.getElementById("users-spinner");
+
+      // Setup RTDB Sync Listener
+      const usersRef = ref(db, `${DB_ROOT}/users`);
+      onValue(usersRef, (snapshot) => {
+        usersSpinner.classList.add("hidden");
+        if (snapshot.exists()) {
+          allUsers = snapshot.val();
+        } else {
+          allUsers = {};
+        }
+        renderUsers();
+      }, (error) => {
+        console.error(error);
+        showToast("Failed to fetch users: " + error.message, "error");
+        usersSpinner.classList.add("hidden");
+      });
+
+      // Render Users List Function
+      function renderUsers() {
+        usersList.innerHTML = "";
+        const uList = Object.entries(allUsers);
+        
+        let filtered = uList;
+        if (activeSearchText) {
+          filtered = uList.filter(([id, u]) => {
+            const nameMatch = u.name && u.name.toLowerCase().includes(activeSearchText.toLowerCase());
+            const userMatch = u.username && u.username.toLowerCase().includes(activeSearchText.toLowerCase());
+            return nameMatch || userMatch;
+          });
+        }
+
+        userCountBadge.innerText = `${filtered.length} Users`;
+
+        if (filtered.length === 0) {
+          emptyState.classList.remove("hidden");
+          return;
+        }
+
+        emptyState.classList.add("hidden");
+
+        // Sort by name
+        filtered.sort((a,b) => (a[1].name || "").localeCompare(b[1].name || ""));
+
+        filtered.forEach(([userId, user]) => {
+          const userCard = document.createElement("div");
+          userCard.className = "bg-white rounded-2xl p-4 border border-rose-950/5 shadow-xs flex items-start gap-3 relative overflow-hidden transition hover:shadow-sm";
+          
+          const dpImageHtml = user.dpUrl 
+            ? `<img src="${user.dpUrl}" class="w-12 h-12 rounded-full object-cover border border-slate-100 shrink-0 select-none">`
+            : `
+              <div class="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center shrink-0 border border-slate-100 select-none">
+                <i data-lucide="user" class="text-slate-400 w-6 h-6"></i>
+              </div>
+            `;
+
+          const statusBadge = user.status === "active"
+            ? `<span class="bg-emerald-50 text-emerald-700 text-[10px] font-bold px-2.5 py-0.5 rounded-full border border-emerald-200">Active</span>`
+            : `<span class="bg-slate-100 text-slate-500 text-[10px] font-bold px-2.5 py-0.5 rounded-full border border-slate-200">Disabled</span>`;
+
+          userCard.innerHTML = `
+            <div class="flex-1 flex gap-3">
+              ${dpImageHtml}
+              <div class="space-y-1">
+                <div class="flex items-center gap-2 flex-wrap">
+                  <h4 class="font-bold text-slate-800 text-sm leading-tight">${user.name}</h4>
+                  ${statusBadge}
+                </div>
+                <div class="text-[11px] text-slate-500 flex items-center gap-1">
+                  <span class="font-semibold text-slate-700">@${user.username}</span>
+                  <span class="text-slate-300">|</span>
+                  <span>Pass: <strong>${user.password}</strong></span>
+                </div>
+                <div class="text-[11px] text-slate-500 flex items-center gap-1 mt-0.5">
+                  <i data-lucide="phone" class="w-3 h-3 text-slate-400"></i>
+                  <span>${user.mobile || "No Number"}</span>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Quick Actions Options on bottom right of container -->
+            <div class="flex flex-col items-end gap-1.5 shrink-0 self-center">
+              <button class="status-toggle-btn px-2 py-1 bg-slate-50 border border-slate-200 hover:bg-slate-100 font-semibold text-[10px] rounded-lg transition" data-id="${userId}" data-status="${user.status}">
+                ${user.status === 'active' ? 'Disable' : 'Enable'}
+              </button>
+              <div class="flex items-center gap-1">
+                <button class="edit-btn p-1.5 text-blue-600 hover:bg-blue-50 border border-blue-100 rounded-lg transition" data-id="${userId}" title="Edit User">
+                  <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
+                </button>
+                <button class="delete-btn p-1.5 text-rose-600 hover:bg-rose-50 border border-rose-100 rounded-lg transition" data-id="${userId}" title="Delete User">
+                  <i data-lucide="trash" class="w-3.5 h-3.5"></i>
+                </button>
+              </div>
+            </div>
+          `;
+
+          usersList.appendChild(userCard);
+        });
+
+        lucide.createIcons();
+
+        // Attach action events
+        document.querySelectorAll(".status-toggle-btn").forEach(btn => {
+          btn.onclick = async (e) => {
+            const uid = e.currentTarget.getAttribute("data-id");
+            const currentStatus = e.currentTarget.getAttribute("data-status");
+            const nextStatus = currentStatus === "active" ? "disabled" : "active";
+            
+            try {
+              usersSpinner.classList.remove("hidden");
+              await update(ref(db, `${DB_ROOT}/users/${uid}`), { status: nextStatus });
+              showToast(`User profile status updated to ${nextStatus}`, "success");
+            } catch (err) {
+              showToast("Failed to update status: " + err.message, "error");
+            } finally {
+              usersSpinner.classList.add("hidden");
+            }
+          };
+        });
+
+        document.querySelectorAll(".edit-btn").forEach(btn => {
+          btn.onclick = (e) => {
+            const uid = e.currentTarget.getAttribute("data-id");
+            openEditModal(uid);
+          };
+        });
+
+        document.querySelectorAll(".delete-btn").forEach(btn => {
+          btn.onclick = async (e) => {
+            const uid = e.currentTarget.getAttribute("data-id");
+            if (confirm("Are you sure you want to delete this user profile? All records will be removed irrevocably.")) {
+              try {
+                usersSpinner.classList.remove("hidden");
+                
+                // Also remove assignment
+                await remove(ref(db, `${DB_ROOT}/assignments/${uid}`));
+                // Remove cart
+                await remove(ref(db, `${DB_ROOT}/carts/${uid}`));
+                // Remove session
+                await remove(ref(db, `${DB_ROOT}/sessions/${uid}`));
+                // Remove user
+                await remove(ref(db, `${DB_ROOT}/users/${uid}`));
+
+                showToast("User deleted successfully", "success");
+              } catch (err) {
+                showToast("Failed to delete user: " + err.message, "error");
+              } finally {
+                usersSpinner.classList.add("hidden");
+              }
+            }
+          };
+        });
+      }
+
+      // Dialog Close/Open helpers
+      addBtn.onclick = () => {
+        resetForm();
+        modalTitle.innerText = "Create User";
+        userModal.classList.remove("hidden");
+        document.body.classList.add("overflow-hidden");
+      };
+
+      closeModal.onclick = () => {
+        userModal.classList.add("hidden");
+        document.body.classList.remove("overflow-hidden");
+      };
+
+      // Reset form controls
+      function resetForm() {
+        userForm.reset();
+        formUserId.value = "";
+        formDpUrl.value = "";
+        formDpPreview.src = "";
+        formDpPreview.classList.add("hidden");
+        formDpPlaceholder.classList.remove("hidden");
+        formStatus.value = "active";
+      }
+
+      // Handle File Upload to Cloudinary
+      fileInput.onchange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        uploadingOverlay.classList.remove("hidden");
+        try {
+          const uploadedUrl = await uploadImageToCloudinary(file);
+          formDpUrl.value = uploadedUrl;
+          formDpPreview.src = uploadedUrl;
+          formDpPreview.classList.remove("hidden");
+          formDpPlaceholder.classList.add("hidden");
+          showToast("Image uploaded successfully!", "success");
+        } catch (error) {
+          showToast("Failed to upload image to cloud storage: " + error.message, "error");
+        } finally {
+          uploadingOverlay.classList.add("hidden");
+        }
+      };
+
+      // Open in Edit mode
+      function openEditModal(uid) {
+        const user = allUsers[uid];
+        if (!user) return;
+
+        resetForm();
+        modalTitle.innerText = "Edit User";
+        formUserId.value = uid;
+        formName.value = user.name || "";
+        formUsername.value = user.username || "";
+        formPassword.value = user.password || "";
+        formMobile.value = user.mobile || "";
+        formStatus.value = user.status || "active";
+        formDpUrl.value = user.dpUrl || "";
+
+        if (user.dpUrl) {
+          formDpPreview.src = user.dpUrl;
+          formDpPreview.classList.remove("hidden");
+          formDpPlaceholder.classList.add("hidden");
+        }
+
+        userModal.classList.remove("hidden");
+        document.body.classList.add("overflow-hidden");
+      }
+
+      // Handle form submit (Insert or Edit)
+      userForm.onsubmit = async (e) => {
+        e.preventDefault();
+
+        const uid = formUserId.value;
+        const name = formName.value.trim();
+        const username = formUsername.value.trim().toLowerCase();
+        const password = formPassword.value.trim();
+        const mobile = formMobile.value.trim();
+        const status = formStatus.value;
+        const dpUrl = formDpUrl.value;
+
+        // Validation - ensure username is unique
+        const existingId = Object.keys(allUsers).find(id => allUsers[id].username === username && id !== uid);
+        if (existingId) {
+          showToast("Username already exists. Try another username.", "error");
+          return;
+        }
+
+        usersSpinner.classList.remove("hidden");
+        userModal.classList.add("hidden");
+        document.body.classList.remove("overflow-hidden");
+
+        try {
+          if (uid) {
+            // Edit User
+            const userRef = ref(db, `${DB_ROOT}/users/${uid}`);
+            await update(userRef, {
+              name,
+              username,
+              password,
+              mobile,
+              status,
+              dpUrl
+            });
+            showToast("User profile updated successfully", "success");
+          } else {
+            // New User ID creation
+            const newId = "user_" + Date.now();
+            const userRef = ref(db, `${DB_ROOT}/users/${newId}`);
+            await set(userRef, {
+              name,
+              username,
+              password,
+              mobile,
+              status,
+              dpUrl,
+              createdAt: Date.now()
+            });
+            showToast("User profile registered successfully", "success");
+          }
+        } catch (error) {
+          showToast("Database Save Error: " + error.message, "error");
+        } finally {
+          usersSpinner.classList.add("hidden");
+        }
+      };
+
+      // Search events
+      searchInput.oninput = (e) => {
+        activeSearchText = e.target.value;
+        if (activeSearchText) {
+          clearSearchBtn.classList.remove("hidden");
+        } else {
+          clearSearchBtn.classList.add("hidden");
+        }
+        renderUsers();
+      };
+
+      clearSearchBtn.onclick = () => {
+        searchInput.value = "";
+        activeSearchText = "";
+        clearSearchBtn.classList.add("hidden");
+        renderUsers();
+      };
+    });
+  </script>
+</body>
+</html>

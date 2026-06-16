@@ -1,0 +1,8 @@
+{
+  "name": "Bhikharam Chandmal Order Management System",
+  "description": "A production-ready mobile-first order management system for stores and clients of Bhikharam Chandmal, with order booking, products inventory, assignment management, and payment tracker.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Bhikharam Chandmal Admin Assignments</title>
+  <!-- Google Fonts Poppins -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Tailwind CSS Play CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#7d0000',
+            secondary: '#ffd54a',
+            bgsoft: '#f7f4ec',
+          },
+          fontFamily: {
+            sans: ['Poppins', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-bgsoft font-sans min-h-screen text-slate-800 pb-24">
+
+  <!-- Sticky Header -->
+  <header class="sticky top-0 z-40 bg-primary text-white border-b-4 border-secondary shadow-md px-4 py-3 flex items-center justify-between">
+    <div class="flex items-center gap-2">
+      <a href="admin_dashboard.html" class="w-9 h-9 hover:bg-black/20 rounded-xl flex items-center justify-center transition">
+        <i data-lucide="chevron-left" class="text-secondary w-6 h-6"></i>
+      </a>
+      <div>
+        <h1 class="text-sm font-bold tracking-wider leading-tight">STORE ASSIGNMENTS</h1>
+        <p class="text-[10px] font-semibold text-secondary tracking-widest uppercase">Admin Operations</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-1 bg-[#ffd54a]/10 border border-[#ffd54a]/30 px-2.5 py-1 rounded-full">
+      <i data-lucide="link" class="w-3.5 h-3.5 text-secondary"></i>
+      <span class="text-[9px] text-[#ffd54a] font-bold uppercase tracking-wider">Access Panel</span>
+    </div>
+  </header>
+
+  <main class="max-w-md mx-auto p-4 space-y-5 animate-fade-in">
+    <!-- User Dropdown Card Picker -->
+    <div class="bg-white rounded-3xl p-5 border border-rose-950/5 shadow-xs space-y-3">
+      <div>
+        <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-1 px-1">Select User Profile</label>
+        <p class="text-[10px] text-slate-400 px-1 mb-2">Select the salesperson to allocate store catalogs.</p>
+      </div>
+      
+      <div class="relative">
+        <span class="absolute inset-y-0 left-0 flex items-center pl-3">
+          <i data-lucide="user" class="text-slate-400 w-5 h-5"></i>
+        </span>
+        <select 
+          id="user-select" 
+          class="w-full pl-10 pr-3 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary/20 transition cursor-pointer"
+        >
+          <option value="" disabled selected>Choose user for allocation...</option>
+          <!-- Populated from DB -->
+        </select>
+      </div>
+    </div>
+
+    <!-- Allocation checklist Container card -->
+    <div id="allocation-card" class="bg-white rounded-3xl p-5 border border-rose-950/5 shadow-xs space-y-4 hidden">
+      <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+        <div>
+          <h3 class="text-sm font-bold text-slate-800 tracking-wide">Assign Store Access</h3>
+          <p class="text-[10px] text-slate-400 mt-0.5">Toggle stores that this user is allowed to book orders for.</p>
+        </div>
+        <button 
+          id="select-all-btn" 
+          type="button" 
+          class="text-[10px] font-bold text-primary hover:underline transition"
+        >
+          Toggle All
+        </button>
+      </div>
+
+      <!-- Stores list checklist -->
+      <div id="stores-checklist" class="space-y-2.5 max-h-[350px] overflow-y-auto pr-1">
+        <!-- Dyn Checklist items injected here -->
+      </div>
+
+      <!-- Bottom action bar -->
+      <div class="pt-3 border-t border-slate-100 flex items-center justify-between gap-3">
+        <div class="text-[11px] text-slate-400 font-semibold" id="selection-counter">
+          0 stores selected
+        </div>
+        <button 
+          id="save-assignments-btn" 
+          type="button" 
+          class="bg-primary hover:bg-rose-950 active:scale-[0.97] text-white py-2.5 px-5 rounded-xl font-bold text-xs shadow-md transition flex items-center gap-1.5"
+        >
+          <i data-lucide="save" class="w-4 h-4 text-secondary"></i>
+          <span>Save Assignments</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Setup Prompt empty state -->
+    <div id="prompt-state" class="text-center py-16 bg-white rounded-3xl p-6 border border-rose-950/5">
+      <div class="w-16 h-16 bg-slate-50 text-slate-400 rounded-full flex items-center justify-center mx-auto mb-3">
+        <i data-lucide="shield-alert" class="w-8 h-8"></i>
+      </div>
+      <p class="font-bold text-slate-700 text-sm">No User Selected</p>
+      <p class="text-xs text-slate-400 mt-1">Please select a salesperson profile from the dropdown panel above to manage store permissions.</p>
+    </div>
+
+    <!-- Active assignments summary lookup -->
+    <div class="bg-white rounded-3xl p-5 border border-rose-950/5 shadow-xs space-y-3">
+      <h3 class="text-xs font-bold text-slate-500 uppercase tracking-widest pl-1">Roster Allocation Summary</h3>
+      
+      <!-- summary spinner -->
+      <div id="summary-spin" class="py-6 flex justify-center">
+        <div class="animate-spin rounded-full h-6 w-6 border-2 border-primary border-t-transparent"></div>
+      </div>
+
+      <div id="assignment-summary" class="space-y-2.5 text-xs text-slate-600">
+        <!-- Quick scannable counts of assignments per user -->
+      </div>
+    </div>
+  </main>
+
+  <!-- Bottom navigation -->
+  <nav class="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-rose-950/5 shadow-lg max-w-md mx-auto flex items-center justify-around py-2 px-1">
+    <a href="admin_dashboard.html" class="flex flex-col items-center text-slate-400 hover:text-primary transition py-1">
+      <i data-lucide="home" class="w-5 h-5"></i>
+      <span class="text-[9px] font-semibold mt-0.5">Home</span>
+    </a>
+    <a href="admin_users.html" class="flex flex-col items-center text-slate-400 hover:text-primary transition py-1">
+      <i data-lucide="users" class="w-5 h-5"></i>
+      <span class="text-[9px] font-semibold mt-0.5">Users</span>
+    </a>
+    <a href="admin_stores.html" class="flex flex-col items-center text-slate-400 hover:text-primary transition py-1">
+      <i data-lucide="store" class="w-5 h-5"></i>
+      <span class="text-[9px] font-semibold mt-0.5">Stores</span>
+    </a>
+    <a href="admin_products.html" class="flex flex-col items-center text-slate-400 hover:text-primary transition py-1">
+      <i data-lucide="package" class="w-5 h-5"></i>
+      <span class="text-[9px] font-semibold mt-0.5">Products</span>
+    </a>
+    <a href="admin_orders.html" class="flex flex-col items-center text-slate-400 hover:text-primary transition py-1">
+      <i data-lucide="shopping-bag" class="w-5 h-5"></i>
+      <span class="text-[9px] font-semibold mt-0.5">Orders</span>
+    </a>
+  </nav>
+
+  <!-- Script logic -->
+  <script type="module">
+    import { 
+      db, 
+      ref, 
+      set, 
+      get, 
+      remove, 
+      onValue, 
+      DB_ROOT, 
+      checkAdminSession, 
+      showToast, 
+      showLoader, 
+      hideLoader 
+    } from "./firebase-config.js";
+
+    let activeUsers = {};
+    let activeStores = {};
+    let activeAssignments = {};
+    let selectedUserId = "";
+
+    document.addEventListener("DOMContentLoaded", async () => {
+      lucide.createIcons();
+
+      // Session Validation
+      const verified = await checkAdminSession();
+      if (!verified) {
+        window.location.href = "admin_login.html";
+        return;
+      }
+
+      // DOM Handles
+      const userSelect = document.getElementById("user-select");
+      const allocationCard = document.getElementById("allocation-card");
+      const promptState = document.getElementById("prompt-state");
+      const storesChecklist = document.getElementById("stores-checklist");
+      const selectAllBtn = document.getElementById("select-all-btn");
+      const selectionCounter = document.getElementById("selection-counter");
+      const saveBtn = document.getElementById("save-assignments-btn");
+      
+      const summarySpin = document.getElementById("summary-spin");
+      const assignmentSummary = document.getElementById("assignment-summary");
+
+      // Set up real time listeners for global summaries
+      // Combine users, stores, and assignments details
+      const userRef = ref(db, `${DB_ROOT}/users`);
+      const storeRef = ref(db, `${DB_ROOT}/stores`);
+      const assignRef = ref(db, `${DB_ROOT}/assignments`);
+
+      // Load primary static data first
+      try {
+        const uSnap = await get(userRef);
+        const sSnap = await get(storeRef);
+        
+        if (uSnap.exists()) {
+          activeUsers = uSnap.val();
+          // Load users selector
+          userSelect.innerHTML = `<option value="" disabled selected>Choose user for allocation...</option>`;
+          Object.entries(activeUsers)
+            .sort((a,b) => (a[1].name || "").localeCompare(b[1].name || ""))
+            .forEach(([uid, u]) => {
+              if (u.status === "active") {
+                const opt = document.createElement("option");
+                opt.value = uid;
+                opt.innerText = `${u.name} (@${u.username})`;
+                userSelect.appendChild(opt);
+              }
+            });
+        }
+
+        if (sSnap.exists()) {
+          activeStores = sSnap.val();
+        }
+      } catch (err) {
+        console.error("Data load failure: ", err);
+      }
+
+      // Sync active assignments in real time to update summaries
+      onValue(assignRef, (snapshot) => {
+        summarySpin.classList.add("hidden");
+        if (snapshot.exists()) {
+          activeAssignments = snapshot.val();
+        } else {
+          activeAssignments = {};
+        }
+        renderSummaryRoster();
+        if (selectedUserId) {
+          loadUserAssignments(selectedUserId);
+        }
+      });
+
+      // Render summary log
+      function renderSummaryRoster() {
+        assignmentSummary.innerHTML = "";
+        const uEntries = Object.entries(activeUsers);
+        
+        if (uEntries.length === 0) {
+          assignmentSummary.innerHTML = `<p class="text-xs text-slate-400 italic">No users available.</p>`;
+          return;
+        }
+
+        uEntries.sort((a,b) => (a[1].name || "").localeCompare(b[1].name || ""));
+
+        uEntries.forEach(([uid, u]) => {
+          const userStoreAllocObj = activeAssignments[uid] || {};
+          const count = Object.keys(userStoreAllocObj).length;
+          
+          const row = document.createElement("div");
+          row.className = "flex items-center justify-between border-b border-dashed border-slate-100 pb-2 flex-wrap";
+          row.innerHTML = `
+            <div class="flex items-center gap-2">
+              <div class="w-2 h-2 rounded-full ${u.status === 'active' ? 'bg-emerald-500' : 'bg-slate-400'}"></div>
+              <span class="font-bold text-slate-700">${u.name}</span>
+              <span class="text-[10px] text-slate-400 font-medium">@${u.username}</span>
+            </div>
+            
+            <div class="flex items-center gap-1">
+              <span class="font-bold text-primary">${count}</span>
+              <span class="text-[10px] text-slate-400">Stores allocated</span>
+            </div>
+          `;
+          assignmentSummary.appendChild(row);
+        });
+      }
+
+      // Handle user selector change
+      userSelect.onchange = (e) => {
+        selectedUserId = e.target.value;
+        promptState.classList.add("hidden");
+        allocationCard.classList.remove("hidden");
+        loadUserAssignments(selectedUserId);
+      };
+
+      // Load specific user's store assignments
+      function loadUserAssignments(uid) {
+        storesChecklist.innerHTML = "";
+        const assignedSet = activeAssignments[uid] || {};
+        
+        const storeEntries = Object.entries(activeStores);
+        if (storeEntries.length === 0) {
+          storesChecklist.innerHTML = `<p class="text-xs text-slate-400 italic py-2 text-center">No stores available in database directory.</p>`;
+          selectionCounter.innerText = "0 stores selected";
+          return;
+        }
+
+        storeEntries.sort((a,b) => (a[1].name || "").localeCompare(b[1].name || ""));
+
+        storeEntries.forEach(([sid, store]) => {
+          const isChecked = assignedSet[sid] === true;
+          const item = document.createElement("label");
+          item.className = "flex items-start gap-3 p-3 bg-slate-50 border border-slate-200/60 rounded-2xl cursor-pointer select-none hover:bg-slate-100/50 transition duration-150";
+          
+          item.innerHTML = `
+            <input 
+              type="checkbox" 
+              class="store-checkbox accent-primary mt-1 shrink-0 w-4 h-4 border-slate-300 rounded-sm focus:ring-primary/20" 
+              data-id="${sid}"
+              ${isChecked ? 'checked' : ''}
+            >
+            <div>
+              <div class="font-bold text-slate-800 text-xs">${store.name}</div>
+              <div class="text-[10px] text-slate-400 mt-0.5 truncate max-w-[250px]">${store.address || "No address listed"}</div>
+            </div>
+          `;
+
+          storesChecklist.appendChild(item);
+        });
+
+        // Add event checks to checkboxes to keep counts fresh
+        document.querySelectorAll(".store-checkbox").forEach(chk => {
+          chk.addEventListener("change", updateCheckedCount);
+        });
+
+        updateCheckedCount();
+      }
+
+      // Update badge counts
+      function updateCheckedCount() {
+        const count = document.querySelectorAll(".store-checkbox:checked").length;
+        selectionCounter.innerText = `${count} stores selected`;
+      }
+
+      // Multi-toggle selection helper
+      selectAllBtn.onclick = () => {
+        const checkboxes = document.querySelectorAll(".store-checkbox");
+        const allChecked = Array.from(checkboxes).every(c => c.checked);
+        
+        checkboxes.forEach(c => {
+          c.checked = !allChecked;
+        });
+        updateCheckedCount();
+      };
+
+      // Save assignments back to database
+      saveBtn.onclick = async () => {
+        if (!selectedUserId) {
+          showToast("Select a salesperson to assign stores.", "error");
+          return;
+        }
+
+        showLoader();
+        try {
+          const checkboxes = document.querySelectorAll(".store-checkbox");
+          const assignmentObj = {};
+          
+          checkboxes.forEach(c => {
+            if (c.checked) {
+              const sid = c.getAttribute("data-id");
+              assignmentObj[sid] = true;
+            }
+          });
+
+          // Set complete assignments list
+          const specificRef = ref(db, `${DB_ROOT}/assignments/${selectedUserId}`);
+          
+          // Clear if empty, otherwise update
+          if (Object.keys(assignmentObj).length === 0) {
+            await remove(specificRef);
+          } else {
+            await set(specificRef, assignmentObj);
+          }
+
+          showToast("Store allocation assignments saved successfully!", "success");
+        } catch (err) {
+          showToast("Database Save Error: " + err.message, "error");
+        } finally {
+          hideLoader();
+        }
+      };
+    });
+  </script>
+</body>
+</html>
