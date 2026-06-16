@@ -120,7 +120,7 @@
     </a>
   </nav>
 
-  <!-- POPUP: Order Details Dialog Modal for Salespersons -->
+  <!-- POPUP: Order Details Dialog/Form Modal for Salespersons -->
   <div id="user-order-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
     <div class="bg-white rounded-3xl shadow-xl w-full max-w-sm max-h-[90vh] overflow-y-auto transform transition scale-95 duration-200">
       
@@ -140,16 +140,33 @@
         </div>
       </div>
 
-      <!-- Modal Body -->
-      <div class="p-6 space-y-4">
-        <!-- Status Badge -->
-        <div class="flex items-center justify-between">
-          <span class="text-slate-400 text-xs font-bold uppercase tracking-wider animate-pulse">Booking Status</span>
-          <span id="modal-status" class="text-[10px] uppercase font-extrabold tracking-wider px-3 py-1 rounded-full border">Pending</span>
+      <!-- Modal Body Form -->
+      <form id="user-order-update-form" class="p-6 space-y-4">
+        <!-- Hidden input to reference selected order key -->
+        <input type="hidden" id="user-form-order-key">
+
+        <!-- Status selector interface -->
+        <div>
+          <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 pl-1">Booking Delivery Status</label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+              <i data-lucide="truck" class="text-slate-400 w-4 h-4"></i>
+            </span>
+            <select 
+              id="user-form-status" 
+              required
+              class="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-xs font-bold focus:ring-2 focus:ring-primary/20 outline-none transition cursor-pointer font-sans"
+            >
+              <option value="pending">Pending Review</option>
+              <option value="confirmed">Confirmed / Packing</option>
+              <option value="delivered">Delivered / Handover</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+          </div>
         </div>
 
         <!-- Store information Block -->
-        <div class="bg-slate-50 border border-slate-101 p-3.5 rounded-2xl text-[11px] text-slate-600 space-y-1.5 animate-fade-in">
+        <div class="bg-slate-50 border border-slate-100 p-3.5 rounded-2xl text-[11px] text-slate-600 space-y-1.5 animate-fade-in">
           <div class="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Fulfillment Store</div>
           <p id="modal-store-name" class="font-extrabold text-slate-800 text-xs truncate">N/A</p>
           <p id="modal-store-address" class="text-slate-500 leading-relaxed text-[10px] truncate">N/A</p>
@@ -158,8 +175,8 @@
 
         <!-- Scrollable list of items -->
         <div class="space-y-1.5">
-          <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest pl-1">Ordered Items List</label>
-          <div id="modal-items-list" class="bg-slate-50 border border-slate-100 p-3 rounded-2xl max-h-36 overflow-y-auto space-y-1.5 text-[11px]">
+          <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest pl-1">Ordered Items List</label>
+          <div id="modal-items-list" class="bg-slate-50 border border-slate-100 p-3 rounded-2xl max-h-32 overflow-y-auto space-y-1.5 text-[11px]">
             <!-- populated dynamically -->
           </div>
         </div>
@@ -170,32 +187,80 @@
           <span id="modal-notes" class="leading-relaxed">notes...</span>
         </div>
 
-        <!-- Progress Payments status indicator -->
-        <div class="space-y-2 border-t border-slate-100 pt-4">
-          <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wide">Payments Reconciliation</h4>
-          
-          <div class="bg-slate-50 border border-slate-100 rounded-2xl p-3.5 space-y-1.5 text-[11px] text-slate-600">
-            <div class="flex justify-between">
-              <span>Advance Amount Paid:</span>
-              <span id="modal-advance-amount" class="font-bold text-slate-700">₹0.00</span>
+        <!-- Payments Form grid for Sales representative -->
+        <div class="space-y-3 pt-3 border-t border-slate-100">
+          <div class="flex items-center justify-between">
+            <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wide">Payments Received</h4>
+            <!-- Full payment helper button -->
+            <button 
+              type="button" 
+              id="user-full-payment-btn" 
+              class="text-[9px] bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 px-2 py-1 rounded-lg font-bold transition flex items-center gap-1 active:scale-95 cursor-pointer"
+            >
+              <i data-lucide="check-circle" class="w-3.5 h-3.5 text-emerald-600"></i>
+              <span>Full Payment</span>
+            </button>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1 pl-1">Advance (₹)</label>
+              <div class="relative">
+                <span class="absolute inset-y-0 left-0 flex items-center pl-2.5 text-slate-500 font-bold text-[10px] select-none">₹</span>
+                <input 
+                  type="number" 
+                  id="user-form-advance" 
+                  placeholder="0.00" 
+                  step="0.01" 
+                  min="0"
+                  class="w-full pl-6 pr-2 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-xs focus:ring-2 focus:ring-primary/20 outline-none transition font-semibold"
+                >
+              </div>
             </div>
-            <div class="flex justify-between">
-              <span>Final Amount Paid:</span>
-              <span id="modal-final-amount" class="font-bold text-slate-700">₹0.00</span>
-            </div>
-            <div class="flex justify-between pt-1.5 border-t border-dashed border-slate-200 font-extrabold text-xs">
-              <span class="text-slate-800">Remaining Balance:</span>
-              <span id="modal-balance-amount" class="text-primary">₹0.00</span>
+            <div>
+              <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1 pl-1">Final (₹)</label>
+              <div class="relative">
+                <span class="absolute inset-y-0 left-0 flex items-center pl-2.5 text-slate-500 font-bold text-[10px] select-none">₹</span>
+                <input 
+                  type="number" 
+                  id="user-form-final" 
+                  placeholder="0.00" 
+                  step="0.01" 
+                  min="0"
+                  class="w-full pl-6 pr-2 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-xs focus:ring-2 focus:ring-primary/20 outline-none transition font-semibold"
+                >
+              </div>
             </div>
           </div>
         </div>
 
-        <!-- Bottom overall total valuation block -->
-        <div class="flex justify-between items-center pt-3 border-t border-slate-100">
-          <span class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Total Invoice Value</span>
-          <span id="modal-total" class="text-base font-black text-primary">₹0.00</span>
+        <!-- Calculations visual review -->
+        <div class="bg-amber-50/50 p-3 rounded-2xl border border-amber-200/50 flex justify-between items-center text-xs">
+          <div>
+            <div class="text-[9px] text-slate-400 font-semibold uppercase tracking-wider">Remaining Balance</div>
+            <div id="modal-balance-amount" class="font-extrabold text-[#7d0000] text-sm mt-0.5">₹0.00</div>
+          </div>
+          <div id="modal-payment-indicator" class="hidden font-bold text-[10px] uppercase text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-2.5 py-1">
+            Payment Complete
+          </div>
         </div>
-      </div>
+
+        <!-- Submit and overall valuation block -->
+        <div class="pt-3 border-t border-slate-100 space-y-3">
+          <div class="flex justify-between items-center">
+            <span class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Total Value</span>
+            <span id="modal-total" class="text-base font-black text-primary">₹0.00</span>
+          </div>
+
+          <button 
+            type="submit" 
+            class="w-full bg-primary hover:bg-rose-950 active:scale-[0.97] text-white py-3 px-4 rounded-xl font-bold text-xs shadow-md transition flex items-center justify-center gap-1.5 pt-2.5 pb-2.5 cursor-pointer font-sans"
+          >
+            <i data-lucide="save" class="w-4 h-4"></i>
+            <span>Save Status & Payments</span>
+          </button>
+        </div>
+      </form>
     </div>
   </div>
 
@@ -205,6 +270,7 @@
       db, 
       ref, 
       get, 
+      update,
       onValue, 
       DB_ROOT, 
       checkUserSession, 
@@ -231,6 +297,93 @@
       const ordersList = document.getElementById("orders-list");
       const emptyState = document.getElementById("empty-state");
       const spinner = document.getElementById("orders-spinner");
+
+      // Interactive Form elements inside details modal
+      const userOrderUpdateForm = document.getElementById("user-order-update-form");
+      const userFormOrderKey = document.getElementById("user-form-order-key");
+      const userFormStatus = document.getElementById("user-form-status");
+      const userFormAdvance = document.getElementById("user-form-advance");
+      const userFormFinal = document.getElementById("user-form-final");
+      const userFullPaymentBtn = document.getElementById("user-full-payment-btn");
+
+      // Balance status math logic for real-time recalculations
+      function userRecalculateBalance() {
+        const orderKey = userFormOrderKey.value;
+        const currentOrder = allOrders[orderKey];
+        if (!currentOrder) return;
+
+        const grandTotal = parseFloat(currentOrder.grandTotal || 0);
+        const advVal = parseFloat(userFormAdvance.value || 0);
+        const finVal = parseFloat(userFormFinal.value || 0);
+        const balance = grandTotal - advVal - finVal;
+
+        const balanceField = document.getElementById("modal-balance-amount");
+        const paymentIndicator = document.getElementById("modal-payment-indicator");
+
+        if (balanceField) {
+          balanceField.innerText = `₹${balance.toFixed(2)}`;
+          if (balance <= 0) {
+            balanceField.className = "font-extrabold text-emerald-600 text-sm mt-0.5";
+            if (paymentIndicator) paymentIndicator.classList.remove("hidden");
+          } else {
+            balanceField.className = "font-extrabold text-[#7d0000] text-sm mt-0.5";
+            if (paymentIndicator) paymentIndicator.classList.add("hidden");
+          }
+        }
+      }
+
+      if (userFormAdvance) {
+        userFormAdvance.oninput = userRecalculateBalance;
+      }
+      if (userFormFinal) {
+        userFormFinal.oninput = userRecalculateBalance;
+      }
+
+      // Add Full Payment one-click auto calculation action
+      if (userFullPaymentBtn) {
+        userFullPaymentBtn.onclick = () => {
+          const orderKey = userFormOrderKey.value;
+          const currentOrder = allOrders[orderKey];
+          if (!currentOrder) return;
+
+          const grandTotal = parseFloat(currentOrder.grandTotal || 0);
+          const advVal = parseFloat(userFormAdvance.value || 0);
+          const neededFinal = grandTotal - advVal;
+
+          userFormFinal.value = neededFinal >= 0 ? neededFinal.toFixed(2) : "0.00";
+          userFormStatus.value = "delivered"; // Auto set transition to delivered status on complete payment collection
+          userRecalculateBalance();
+          showToast("Settled with complete final payment", "success");
+        };
+      }
+
+      // Handle user's order update form submission
+      if (userOrderUpdateForm) {
+        userOrderUpdateForm.onsubmit = async (e) => {
+          e.preventDefault();
+          const key = userFormOrderKey.value;
+          if (!key) return;
+
+          const status = userFormStatus.value;
+          const advanceAmount = parseFloat(userFormAdvance.value || 0);
+          const finalAmount = parseFloat(userFormFinal.value || 0);
+
+          try {
+            const updateRef = ref(db, `${DB_ROOT}/orders/${key}`);
+            await update(updateRef, {
+              status,
+              advanceAmount,
+              finalAmount
+            });
+            showToast("Order status & payments saved successfully!", "success");
+            document.getElementById("user-order-modal").classList.add("hidden");
+            document.body.classList.remove("overflow-hidden");
+          } catch (err) {
+            console.error("Save error:", err);
+            showToast("Failed to save changes: " + err.message, "error");
+          }
+        };
+      }
 
       // Set user header photo
       try {
@@ -640,19 +793,11 @@
         // Modal Header text
         document.getElementById("modal-order-id").innerText = orderId;
 
-        // Status Badge Style mapping
-        const modalStatus = document.getElementById("modal-status");
-        modalStatus.innerText = order.status || "pending";
-        modalStatus.className = "text-[10px] uppercase font-extrabold tracking-wider px-3 py-1 rounded-full border";
-        if (order.status === "confirmed") {
-          modalStatus.classList.add("bg-blue-50", "text-blue-700", "border-blue-200");
-        } else if (order.status === "delivered") {
-          modalStatus.classList.add("bg-emerald-50", "text-emerald-700", "border-emerald-200");
-        } else if (order.status === "cancelled") {
-          modalStatus.classList.add("bg-rose-50", "text-rose-700", "border-rose-200");
-        } else {
-          modalStatus.classList.add("bg-amber-50", "text-amber-700", "border-amber-200");
-        }
+        // Populate Form Fields
+        userFormOrderKey.value = orderId;
+        userFormStatus.value = order.status || "pending";
+        userFormAdvance.value = order.advanceAmount || "0";
+        userFormFinal.value = order.finalAmount || "0";
 
         // Store specs
         document.getElementById("modal-store-name").innerText = order.storeName || "Unknown Store";
@@ -692,22 +837,10 @@
 
         // Financials splitting
         const totalVal = parseFloat(order.grandTotal || 0);
-        const advVal = parseFloat(order.advanceAmount || 0);
-        const finVal = parseFloat(order.finalAmount || 0);
-        const balVal = totalVal - advVal - finVal;
-
-        document.getElementById("modal-advance-amount").innerText = `₹${advVal.toFixed(2)}`;
-        document.getElementById("modal-final-amount").innerText = `₹${finVal.toFixed(2)}`;
-        
-        const balanceField = document.getElementById("modal-balance-amount");
-        balanceField.innerText = `₹${balVal.toFixed(2)}`;
-        if (balVal <= 0) {
-          balanceField.className = "text-emerald-600 font-extrabold text-xs";
-        } else {
-          balanceField.className = "text-primary font-extrabold text-xs";
-        }
-
         document.getElementById("modal-total").innerText = `₹${totalVal.toFixed(2)}`;
+
+        // Recalculate balance visuals
+        userRecalculateBalance();
 
         // Attach modal download action
         document.getElementById("modal-download-pdf-btn").onclick = () => {

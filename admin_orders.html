@@ -213,7 +213,17 @@
 
           <!-- Final Amount Paid -->
           <div>
-            <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Final Amount Paid (₹)</label>
+            <div class="flex items-center justify-between mb-1.5">
+              <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest leading-none">Final Paid (₹)</label>
+              <button 
+                type="button" 
+                id="btn-admin-full-payment" 
+                class="text-[10px] font-bold text-primary hover:text-rose-950 flex items-center gap-1 transition cursor-pointer"
+              >
+                <i data-lucide="check-square" class="w-3.5 h-3.5"></i>
+                <span>Full Payment</span>
+              </button>
+            </div>
             <div class="relative">
               <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-500 font-bold text-xs select-none">₹</span>
               <input 
@@ -334,6 +344,7 @@
       const formAdvance = document.getElementById("form-advance");
       const formFinal = document.getElementById("form-final");
       const deleteOrderBtn = document.getElementById("delete-order-btn");
+      const btnAdminFullPayment = document.getElementById("btn-admin-full-payment");
 
       // Search & Filters Elements
       const searchInput = document.getElementById("search-input");
@@ -365,6 +376,23 @@
 
       formAdvance.addEventListener("input", recalculateBalance);
       formFinal.addEventListener("input", recalculateBalance);
+
+      if (btnAdminFullPayment) {
+        btnAdminFullPayment.onclick = () => {
+          const orderKey = formOrderKey.value;
+          const currentOrder = allOrders[orderKey];
+          if (!currentOrder) return;
+
+          const grandTotal = parseFloat(currentOrder.grandTotal || 0);
+          const advVal = parseFloat(formAdvance.value || 0);
+          const neededFinal = grandTotal - advVal;
+
+          formFinal.value = neededFinal >= 0 ? neededFinal.toFixed(2) : "0.00";
+          formStatus.value = "delivered"; // Auto transition to delivered status on complete payment collection
+          recalculateBalance();
+          showToast("Settled with complete final payment successfully", "success");
+        };
+      }
 
       // RTDB setup order sync listener
       const ordersRef = ref(db, `${DB_ROOT}/orders`);
