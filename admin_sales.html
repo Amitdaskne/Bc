@@ -12,6 +12,9 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- jsPDF and AutoTable for Client-side PDF Exports -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
   <script>
     tailwind.config = {
       theme: {
@@ -53,7 +56,16 @@
 
     <!-- Financial Revenue Metrics Grid -->
     <div class="space-y-3">
-      <h3 class="text-xs font-bold text-slate-500 uppercase tracking-widest pl-1">Financial Performance</h3>
+      <div class="flex items-center justify-between pl-1">
+        <h3 class="text-xs font-bold text-slate-500 uppercase tracking-widest">Financial Performance</h3>
+        <button 
+          id="export-sales-pdf" 
+          class="flex items-center gap-1.5 bg-primary hover:bg-red-950 text-secondary border border-secondary/40 rounded-xl px-2.5 py-1 text-[10px] font-bold tracking-wider transition active:scale-95 shadow-xs cursor-pointer"
+        >
+          <i data-lucide="download-cloud" class="w-3.5 h-3.5 text-secondary"></i>
+          <span>EXPORT REPORT (PDF)</span>
+        </button>
+      </div>
       
       <!-- Big Total Value Card -->
       <div class="bg-gradient-to-br from-primary to-rose-955 rounded-3xl p-5 text-white shadow-lg space-y-3 relative overflow-hidden">
@@ -181,6 +193,272 @@
 
       // Dynamic variables
       let allOrders = {};
+
+      // Click handler for Export PDF
+      document.getElementById("export-sales-pdf").onclick = () => {
+        if (!allOrders || Object.keys(allOrders).length === 0) {
+          showToast("No sales records available to export.", "error");
+          return;
+        }
+
+        try {
+          showLoader();
+
+          const { jsPDF } = window.jspdf;
+          const doc = new jsPDF({
+            orientation: "portrait",
+            unit: "mm",
+            format: "a4"
+          });
+
+          // Crimson Theme Color Definition
+          const primaryColor = [125, 0, 0];
+          const accentColor = [255, 213, 74];
+          const darkText = [30, 41, 59];
+
+          // Branding header banner block
+          doc.setFillColor(...primaryColor);
+          doc.rect(0, 0, 210, 38, "F");
+
+          // Accent strip
+          doc.setFillColor(...accentColor);
+          doc.rect(0, 38, 210, 2.5, "F");
+
+          // Branding text
+          doc.setTextColor(255, 255, 255);
+          doc.setFont("Helvetica", "bold");
+          doc.setFontSize(14);
+          doc.text("BHIKHARAM CHANDMAL ORDER MANAGEMENT SYSTEM", 14, 15);
+          
+          doc.setFont("Helvetica", "normal");
+          doc.setFontSize(9);
+          doc.setTextColor(...accentColor);
+          doc.text("STORE MANAGEMENT & SALES FINANCIAL LEDGER", 14, 21);
+
+          // Meta Info (Right aligned)
+          doc.setTextColor(255, 255, 255);
+          doc.setFontSize(8);
+          const exportTime = new Date().toLocaleString("en-IN", { hour12: true });
+          doc.text(`Export Timestamp: ${exportTime}`, 130, 30);
+          doc.text("Access Tier: STORE ADMIN AUTHED", 130, 34);
+
+          // Re-establish text defaults
+          doc.setTextColor(...darkText);
+
+          // Document Title Section
+          doc.setFont("Helvetica", "bold");
+          doc.setFontSize(12);
+          doc.text("FINANCIAL REVENUE AUDIT REPORT", 14, 50);
+
+          // Recalculate metrics on the fly for PDF
+          const activeOrders = Object.entries(allOrders).filter(([key, o]) => o.status !== "cancelled");
+          
+          let totalSalesRevenue = 0;
+          let totalCollected = 0;
+          let totalValOutstanding = 0;
+
+          const storeSalesMap = {};
+          const productSalesMap = {};
+          const dailySalesMap = {};
+
+          activeOrders.forEach(([key, order]) => {
+            const grandTotal = parseFloat(order.grandTotal || 0);
+            const advancePaid = parseFloat(order.advanceAmount || 0);
+            const finalPaid = parseFloat(order.finalAmount || 0);
+            const collected = advancePaid + finalPaid;
+            const outstanding = grandTotal - collected;
+
+            totalSalesRevenue += grandTotal;
+            totalCollected += collected;
+            totalValOutstanding += outstanding;
+
+            const sName = order.storeName || "Unspecified Warehouse";
+            if (!storeSalesMap[sName]) {
+              storeSalesMap[sName] = { revenue: 0, count: 0 };
+            }
+            storeSalesMap[sName].revenue += grandTotal;
+            storeSalesMap[sName].count += 1;
+
+            if (order.items) {
+              Object.entries(order.items).forEach(([pid, item]) => {
+                const qty = parseInt(item.qty || 0, 10);
+                const price = parseFloat(item.price || 0);
+                const itemTotal = qty * price;
+
+                if (!productSalesMap[pid]) {
+                  productSalesMap[pid] = { name: item.name, qty: 0, revenue: 0 };
+                }
+                productSalesMap[pid].qty += qty;
+                productSalesMap[pid].revenue += itemTotal;
+              });
+            }
+
+            if (order.createdAt) {
+              const dateObj = new Date(order.createdAt);
+              const displayDateStr = dateObj.toLocaleDateString("en-IN", { day: 'numeric', month: 'short', year: 'numeric' });
+              
+              if (!dailySalesMap[displayDateStr]) {
+                dailySalesMap[displayDateStr] = { displayDate: displayDateStr, revenue: 0, count: 0, timestamp: order.createdAt };
+              }
+              dailySalesMap[displayDateStr].revenue += grandTotal;
+              dailySalesMap[displayDateStr].count += 1;
+            }
+          });
+
+          // Metrics summary table
+          const avgVal = activeOrders.length > 0 ? (totalSalesRevenue / activeOrders.length) : 0;
+
+          doc.autoTable({
+            startY: 55,
+            head: [['Financial Core Metrics KPI', 'Current Value Metrics']],
+            body: [
+              ['Total Booked Sales Revenue (Active orders)', `INR ${totalSalesRevenue.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`],
+              ['Total Financial Capital Collected (Adv + Final paid)', `INR ${totalCollected.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`],
+              ['Total Outstanding Balance (Uncollected booking balance)', `INR ${totalValOutstanding.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`],
+              ['Confirmed Order Bookings (Active counts)', `${activeOrders.length} Bookings`],
+              ['Average Order Valuation (Ticket size ratio)', `INR ${avgVal.toFixed(2)}`]
+            ],
+            theme: 'grid',
+            headStyles: { fillColor: primaryColor, textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 10 },
+            bodyStyles: { fontStyle: 'bold', fontSize: 9 },
+            columnStyles: {
+              0: { cellWidth: 120 },
+              1: { cellWidth: 62, halign: 'right' }
+            }
+          });
+
+          // Draw subsequent blocks
+          let currentY = doc.lastAutoTable.finalY + 10;
+
+          // Block 1: Store wise
+          doc.setFont("Helvetica", "bold");
+          doc.setFontSize(11);
+          doc.text("1. REVENUE DISTRIBUTION BY PHYSICAL STORE LOCATION", 14, currentY);
+
+          const storeRows = Object.entries(storeSalesMap)
+            .sort((a,b) => b[1].revenue - a[1].revenue)
+            .map(([sName, stat]) => {
+              const ratio = totalSalesRevenue > 0 ? ((stat.revenue / totalSalesRevenue) * 100) : 0;
+              return [
+                sName,
+                `${stat.count} orders`,
+                `INR ${stat.revenue.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+                `${ratio.toFixed(1)}%`
+              ];
+            });
+
+          doc.autoTable({
+            startY: currentY + 3,
+            head: [['Store Location', 'Order Volume', 'Revenue Share', 'Contribution %']],
+            body: storeRows.length > 0 ? storeRows : [['No data available', '-', '-', '-']],
+            theme: 'striped',
+            headStyles: { fillColor: [40, 40, 40], textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 9 },
+            bodyStyles: { fontSize: 8.5 },
+            columnStyles: {
+              0: { cellWidth: 80 },
+              1: { cellWidth: 32, halign: 'center' },
+              2: { cellWidth: 42, halign: 'right' },
+              3: { cellWidth: 28, halign: 'center' }
+            }
+          });
+
+          currentY = doc.lastAutoTable.finalY + 10;
+
+          // Block 2: Bestselling lists
+          if (currentY > 230) {
+            doc.addPage();
+            currentY = 20;
+          }
+
+          doc.setFont("Helvetica", "bold");
+          doc.setFontSize(11);
+          doc.text("2. PRODUCT SALES PERFORMANCE LEADERBOARD (TOP 10)", 14, currentY);
+
+          const productRows = Object.values(productSalesMap)
+            .sort((a,b) => b.revenue - a.revenue)
+            .slice(0, 10)
+            .map((item, index) => {
+              return [
+                `#${index+1}`,
+                item.name,
+                `${item.qty} units shipped`,
+                `INR ${item.revenue.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+              ];
+            });
+
+          doc.autoTable({
+            startY: currentY + 3,
+            head: [['Rank', 'Product Name', 'Total Units Sold', 'Total Sales Revenue']],
+            body: productRows.length > 0 ? productRows : [['No data available', '-', '-', '-']],
+            theme: 'striped',
+            headStyles: { fillColor: [40, 40, 40], textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 9 },
+            bodyStyles: { fontSize: 8.5 },
+            columnStyles: {
+              0: { cellWidth: 15, halign: 'center' },
+              1: { cellWidth: 90 },
+              2: { cellWidth: 42, halign: 'center' },
+              3: { cellWidth: 35, halign: 'right' }
+            }
+          });
+
+          currentY = doc.lastAutoTable.finalY + 10;
+
+          // Block 3: Daily Timeline
+          if (currentY > 230) {
+            doc.addPage();
+            currentY = 20;
+          }
+
+          doc.setFont("Helvetica", "bold");
+          doc.setFontSize(11);
+          doc.text("3. CHRONOLOGICAL REVENUE TIMELINE", 14, currentY);
+
+          const dayRows = Object.values(dailySalesMap)
+            .sort((a,b) => b.timestamp - a.timestamp)
+            .map(day => {
+              return [
+                day.displayDate,
+                `${day.count} bookings receipted`,
+                `INR ${day.revenue.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+              ];
+            });
+
+          doc.autoTable({
+            startY: currentY + 3,
+            head: [['Date of Ledgering', 'Booking Events Count', 'Total Earned Daily']],
+            body: dayRows.length > 0 ? dayRows : [['No daily timeline records', '-', '-']],
+            theme: 'striped',
+            headStyles: { fillColor: [40, 40, 40], textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 9 },
+            bodyStyles: { fontSize: 8.5 },
+            columnStyles: {
+              0: { cellWidth: 60 },
+              1: { cellWidth: 60, halign: 'center' },
+              2: { cellWidth: 62, halign: 'right' }
+            }
+          });
+
+          // FOOTERS
+          const pageCount = doc.internal.getNumberOfPages();
+          for (let i = 1; i <= pageCount; i++) {
+            doc.setPage(i);
+            doc.setFont("Helvetica", "normal");
+            doc.setFontSize(8);
+            doc.setTextColor(150, 150, 150);
+            doc.text("Bhikharam Chandmal Order Management System - Automated Financial report.", 14, 287);
+            doc.text(`Page ${i} of ${pageCount}`, 180, 287);
+          }
+
+          const fileTimestamp = new Date().toISOString().slice(0, 10);
+          doc.save(`Sales_Audit_Report_${fileTimestamp}.pdf`);
+          showToast("Sales PDF generated & downloaded successfully!", "success");
+
+        } catch (e) {
+          console.error("PDF Export Failure:", e);
+          showToast(`PDF engine error: ${e.message}`, "error");
+        } finally {
+          hideLoader();
+        }
+      };
 
       try {
         const ordersRef = ref(db, `${DB_ROOT}/orders`);

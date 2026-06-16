@@ -12,6 +12,9 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- jsPDF and AutoTable for Client-side PDF Exports -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
   <script>
     tailwind.config = {
       theme: {
@@ -110,9 +113,14 @@
           <h3 class="font-bold text-base tracking-wide">Manage Order</h3>
           <p id="modal-order-id" class="text-[10px] text-rose-200 font-mono tracking-widest uppercase mt-0.5">ORDER_N/A</p>
         </div>
-        <button id="close-modal" class="w-8 h-8 hover:bg-black/10 rounded-lg flex items-center justify-center transition">
-          <i data-lucide="x" class="text-white w-5 h-5"></i>
-        </button>
+        <div class="flex items-center gap-1">
+          <button id="modal-download-pdf-btn" type="button" class="w-8 h-8 hover:bg-white/10 rounded-lg flex items-center justify-center transition" title="Download Invoice (PDF)">
+            <i data-lucide="download" class="text-secondary w-5 h-5"></i>
+          </button>
+          <button id="close-modal" type="button" class="w-8 h-8 hover:bg-black/10 rounded-lg flex items-center justify-center transition">
+            <i data-lucide="x" class="text-white w-5 h-5"></i>
+          </button>
+        </div>
       </div>
 
       <!-- Modal Body Form -->
@@ -127,11 +135,19 @@
           </div>
           <div class="flex justify-between">
             <span class="font-semibold text-slate-400 uppercase tracking-wider">Target Store:</span>
-            <span id="modal-store" class="font-bold text-slate-700truncate max-w-[170px] text-right">N/A</span>
+            <span id="modal-store" class="font-bold text-slate-700 truncate max-w-[170px] text-right">N/A</span>
           </div>
           <div class="flex justify-between border-t border-dashed border-slate-200 pt-1.5 text-xs font-bold mt-1">
             <span class="text-slate-800">Grand Total:</span>
             <span id="modal-total" class="text-primary">₹0.00</span>
+          </div>
+        </div>
+
+        <!-- Ordered Items Summary Panel -->
+        <div class="space-y-1.5">
+          <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest pl-1">Booking Items / Quantity</label>
+          <div id="modal-items-list" class="bg-slate-50 border border-slate-100 p-3 rounded-2xl max-h-36 overflow-y-auto space-y-1.5 text-[11px]">
+            <!-- populated dynamically -->
           </div>
         </div>
 
@@ -451,16 +467,21 @@
             </div>
 
             <!-- Total Price and action row -->
-            <div class="flex items-center justify-between pt-2 border-t border-slate-100">
+            <div class="flex items-center justify-between pt-2.5 border-t border-slate-100 flex-wrap gap-2">
               <div>
-                <div class="text-[9px] text-slate-400 font-medium. uppercase">Grand Booking Total</div>
+                <div class="text-[9px] text-slate-400 font-semibold uppercase">Grand Booking Total</div>
                 <div class="text-sm font-black text-primary">₹${grandTotal.toFixed(2)}</div>
               </div>
               
-              <button class="open-manage-btn bg-primary hover:bg-rose-950 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition flex items-center gap-1.5" data-id="${orderKey}">
-                <i data-lucide="receipt" class="w-3.5 h-3.5 text-secondary"></i>
-                <span>Manage Order</span>
-              </button>
+              <div class="flex items-center gap-1.5">
+                <button class="download-pdf-btn bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs p-2.5 rounded-xl transition flex items-center justify-center cursor-pointer" data-id="${orderKey}" title="Download PDF Invoice">
+                  <i data-lucide="download" class="w-4 h-4"></i>
+                </button>
+                <button class="open-manage-btn bg-primary hover:bg-rose-950 text-white font-bold text-xs px-3 py-2.5 rounded-xl transition flex items-center gap-1.5 whitespace-nowrap" data-id="${orderKey}">
+                  <i data-lucide="settings" class="w-3.5 h-3.5 text-secondary"></i>
+                  <span>Manage</span>
+                </button>
+              </div>
             </div>
           `;
 
@@ -476,6 +497,185 @@
             openManageModal(key);
           };
         });
+
+        document.querySelectorAll(".download-pdf-btn").forEach(btn => {
+          btn.onclick = (e) => {
+            e.stopPropagation();
+            const key = e.currentTarget.getAttribute("data-id");
+            const orderObj = allOrders[key];
+            generateOrderInvoicePDF(key, orderObj);
+          };
+        });
+      }
+
+      // Shared PDF invoice builder
+      function generateOrderInvoicePDF(orderId, order) {
+        if (!order) return;
+        try {
+          const { jsPDF } = window.jspdf;
+          const doc = new jsPDF({
+            orientation: "portrait",
+            unit: "mm",
+            format: "a4"
+          });
+
+          const primaryColor = [125, 0, 0];
+          const accentColor = [255, 213, 74];
+          const darkText = [30, 41, 59];
+
+          // Branding header banner block
+          doc.setFillColor(...primaryColor);
+          doc.rect(0, 0, 210, 38, "F");
+
+          // Accent strip
+          doc.setFillColor(...accentColor);
+          doc.rect(0, 38, 210, 2.5, "F");
+
+          // Branding text
+          doc.setTextColor(255, 255, 255);
+          doc.setFont("Helvetica", "bold");
+          doc.setFontSize(14);
+          doc.text("BHIKHARAM CHANDMAL ORDER MANAGEMENT SYSTEM", 14, 15);
+          
+          doc.setFont("Helvetica", "normal");
+          doc.setFontSize(9);
+          doc.setTextColor(...accentColor);
+          doc.text("OFFICIAL SALES BOOKING RECEIPT & INVOICE", 14, 21);
+
+          // Meta Info (Right aligned)
+          doc.setTextColor(255, 255, 255);
+          doc.setFontSize(8);
+          const formattedDate = order.createdAt ? new Date(order.createdAt).toLocaleString("en-IN", { hour12: true }) : "N/A";
+          doc.text(`Booking Date: ${formattedDate}`, 125, 30);
+          doc.text(`Invoice ID: ${orderId}`, 125, 34);
+
+          // Reset text color
+          doc.setTextColor(...darkText);
+
+          // Section Title
+          doc.setFont("Helvetica", "bold");
+          doc.setFontSize(11);
+          doc.text("CUSTOMER & DISPATCH PARTICULARS", 14, 48);
+
+          // AutoTable with dispatch info
+          doc.autoTable({
+            startY: 52,
+            body: [
+              ['Booked By (Agency Representative)', order.userName || "N/A", 'Fulfillment Store', order.storeName || "N/A"],
+              ['Order Status', order.status ? order.status.toUpperCase() : "PENDING", 'Warehouse Contact', order.storeMobile ? `+91 ${order.storeMobile}` : "N/A"],
+              ['Internal Order ID', orderId, 'Warehouse Address', order.storeAddress || "N/A"]
+            ],
+            theme: 'grid',
+            styles: { fontSize: 8, cellPadding: 2 },
+            columnStyles: {
+              0: { fontStyle: 'bold', fillColor: [247, 244, 236], cellWidth: 45 },
+              1: { cellWidth: 50 },
+              2: { fontStyle: 'bold', fillColor: [247, 244, 236], cellWidth: 35 },
+              3: { cellWidth: 50 }
+            }
+          });
+
+          // Items Title
+          let currentY = doc.lastAutoTable.finalY + 8;
+          doc.setFont("Helvetica", "bold");
+          doc.setFontSize(11);
+          doc.text("ITEMIZED BILLING DESCRIPTIONS", 14, currentY);
+
+          // Items Table
+          const itemRows = [];
+          if (order.items) {
+            Object.entries(order.items).forEach(([pid, item]) => {
+              const qty = parseInt(item.qty || 0, 10);
+              const price = parseFloat(item.price || 0);
+              const total = qty * price;
+              itemRows.push([
+                pid,
+                item.name || "N/A",
+                `INR ${price.toFixed(2)}`,
+                qty,
+                `INR ${total.toFixed(2)}`
+              ]);
+            });
+          }
+
+          doc.autoTable({
+            startY: currentY + 3,
+            head: [['Product ID', 'Item Specification / Name', 'Unit Rate', 'Qty Ordered', 'Itemized Total']],
+            body: itemRows,
+            theme: 'striped',
+            headStyles: { fillColor: primaryColor, textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 9 },
+            bodyStyles: { fontSize: 8.5 },
+            columnStyles: {
+              0: { cellWidth: 25 },
+              1: { cellWidth: 85 },
+              2: { cellWidth: 25, halign: 'right' },
+              3: { cellWidth: 20, halign: 'center' },
+              4: { cellWidth: 25, halign: 'right' }
+            }
+          });
+
+          // Ledger and Financial info
+          currentY = doc.lastAutoTable.finalY + 8;
+          if (currentY > 230) {
+            doc.addPage();
+            currentY = 20;
+          }
+
+          doc.setFont("Helvetica", "bold");
+          doc.setFontSize(11);
+          doc.text("RECEIPT PYMTS AUDIT & SUMMARY", 14, currentY);
+
+          const grandTotal = parseFloat(order.grandTotal || 0);
+          const advanceAmount = parseFloat(order.advanceAmount || 0);
+          const finalAmount = parseFloat(order.finalAmount || 0);
+          const balance = grandTotal - advanceAmount - finalAmount;
+
+          let paymentStatusStr = balance <= 0 ? "PAID / CAPITAL RECEIVED" : "OUTSTANDING DEBT";
+
+          doc.autoTable({
+            startY: currentY + 3,
+            head: [['Financial Parameters', 'Amount Calculation Index']],
+            body: [
+              ['Gross Booking Value (Valuation Amount)', `INR ${grandTotal.toFixed(2)}`],
+              ['Advance Deposit Amount Paid', `INR ${advanceAmount.toFixed(2)}`],
+              ['Post-Delivery / Final Payment Paid', `INR ${finalAmount.toFixed(2)}`],
+              ['Remaining Bal Outstanding', `INR ${balance.toFixed(2)}`],
+              ['Payment Status Clearance', paymentStatusStr]
+            ],
+            theme: 'grid',
+            headStyles: { fillColor: [40, 40, 40], textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 9 },
+            bodyStyles: { fontSize: 8.5 },
+            columnStyles: {
+              0: { cellWidth: 120, fontStyle: 'bold' },
+              1: { cellWidth: 62, halign: 'right', fontStyle: 'bold' }
+            },
+            didParseCell: function(data) {
+              if (data.row.index === 4 && data.colIndex === 1) {
+                if (balance <= 0) {
+                  data.cell.styles.textColor = [16, 124, 65]; // Green
+                } else {
+                  data.cell.styles.textColor = [125, 0, 0]; // Red
+                }
+              }
+            }
+          });
+
+          // Footers
+          const pageCount = doc.internal.getNumberOfPages();
+          for (let i = 1; i <= pageCount; i++) {
+            doc.setPage(i);
+            doc.setFont("Helvetica", "normal");
+            doc.setFontSize(8);
+            doc.setTextColor(150, 150, 150);
+            doc.text("Bhikharam Chandmal Office Copy - Thank you for your business.", 14, 287);
+            doc.text(`Page ${i} of ${pageCount}`, 180, 287);
+          }
+
+          doc.save(`Invoice_${orderId}.pdf`);
+        } catch (e) {
+          console.error("Single order PDF generation error:", e);
+          showToast("PDF Engine failed: " + e.message, "error");
+        }
       }
 
       // Open manage option modal dialog
@@ -493,6 +693,31 @@
         formStatus.value = order.status || "pending";
         formAdvance.value = order.advanceAmount || "0";
         formFinal.value = order.finalAmount || "0";
+
+        // Load items details in modal-items-list
+        const modalItemsList = document.getElementById("modal-items-list");
+        modalItemsList.innerHTML = "";
+        if (order.items) {
+          Object.values(order.items).forEach(item => {
+            const row = document.createElement("div");
+            row.className = "flex items-center justify-between text-slate-700 py-1 border-b border-dashed border-slate-200/60 last:border-0";
+            row.innerHTML = `
+              <div class="flex items-center gap-1.5 min-w-0 pr-2">
+                <span class="font-extrabold text-primary shrink-0">${item.qty}x</span>
+                <span class="truncate font-medium">${item.name}</span>
+              </div>
+              <span class="font-bold shrink-0 text-slate-900">₹${(item.price * item.qty).toFixed(2)}</span>
+            `;
+            modalItemsList.appendChild(row);
+          });
+        } else {
+          modalItemsList.innerHTML = `<p class="text-slate-400 text-center py-2">No items listed inside order.</p>`;
+        }
+
+        // Attach PDF download to modal button
+        document.getElementById("modal-download-pdf-btn").onclick = () => {
+          generateOrderInvoicePDF(orderKey, order);
+        };
 
         recalculateBalance();
 
