@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Inventory & Stock Console</title>
+  <!-- Google Fonts Poppins -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Tailwind CSS Play CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#7d0000',
+            secondary: '#ffd54a',
+            bgsoft: '#f7f4ec',
+          },
+          fontFamily: {
+            sans: ['Poppins', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-bgsoft font-sans min-h-screen text-slate-800 pb-24">
+
+  <!-- Sticky Header -->
+  <header class="sticky top-0 z-40 bg-primary text-white border-b-4 border-secondary shadow-md px-4 py-3 flex items-center justify-between">
+    <div class="flex items-center gap-2">
+      <a href="admin_dashboard.html" class="w-9 h-9 bg-white/10 hover:bg-white/20 text-white rounded-xl flex items-center justify-center transition active:scale-95">
+        <i data-lucide="arrow-left" class="w-5 h-5 text-secondary"></i>
+      </a>
+      <div>
+        <h1 class="text-xs font-bold leading-none tracking-wider text-white">INVENTORY STATUS</h1>
+        <p class="text-[9px] font-bold text-secondary tracking-widest uppercase mt-0.5">Remaining vs Sold Stock</p>
+      </div>
+    </div>
+    
+    <div class="px-2.5 py-1 bg-white/10 border border-white/20 rounded-lg text-[9px] font-bold text-secondary uppercase tracking-wider flex items-center gap-1">
+      <span class="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse"></span>
+      <span>Live DB</span>
+    </div>
+  </header>
+
+  <main class="max-w-md mx-auto p-4 space-y-6">
+
+    <!-- Overview Cards -->
+    <div class="grid grid-cols-2 gap-3">
+      <!-- Remaining Stock Valuation Card -->
+      <div class="bg-white rounded-2xl p-4 border border-rose-950/5 shadow-sm space-y-1">
+        <div class="flex items-center justify-between">
+          <span class="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">Stock Valuation</span>
+          <div class="w-7 h-7 rounded-lg bg-red-50 text-primary flex items-center justify-center">
+            <i data-lucide="calculator" class="w-4 h-4"></i>
+          </div>
+        </div>
+        <div id="remaining-valuation" class="text-base font-black text-slate-800">₹0.00</div>
+        <p class="text-[9px] text-slate-400">Total value in warehouses</p>
+      </div>
+
+      <!-- Sold Stock valuation -->
+      <div class="bg-white rounded-2xl p-4 border border-rose-950/5 shadow-sm space-y-1">
+        <div class="flex items-center justify-between">
+          <span class="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">Sold Products</span>
+          <div class="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+            <i data-lucide="shopping-cart" class="w-4 h-4"></i>
+          </div>
+        </div>
+        <div id="sold-units-count" class="text-base font-black text-slate-800">0 Units</div>
+        <p class="text-[9px] text-slate-400">Sold across active orders</p>
+      </div>
+
+      <!-- Total Unique SKU Card -->
+      <div class="bg-white rounded-2xl p-4 border border-rose-950/5 shadow-sm space-y-1">
+        <div class="flex items-center justify-between">
+          <span class="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">Active SKUs</span>
+          <div class="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+            <i data-lucide="tag" class="w-4 h-4"></i>
+          </div>
+        </div>
+        <div id="total-skus" class="text-base font-black text-slate-800">0 SKUs</div>
+        <p class="text-[9px] text-slate-400">Unique catalog listings</p>
+      </div>
+
+      <!-- Out / Low Stock Alerts -->
+      <div class="bg-white rounded-2xl p-4 border border-rose-950/5 shadow-sm space-y-1">
+        <div class="flex items-center justify-between">
+          <span class="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">Understocked Alerts</span>
+          <div id="alert-bg-icon" class="w-7 h-7 rounded-lg bg-slate-100 text-slate-500 flex items-center justify-center">
+            <i id="alert-icon" data-lucide="alert-triangle" class="w-4 h-4"></i>
+          </div>
+        </div>
+        <div id="low-stock-count" class="text-base font-black text-slate-800">0 SKUs</div>
+        <p class="text-[9px] text-slate-400">Stock count below 5 units</p>
+      </div>
+    </div>
+
+    <!-- Active Filter and Search block -->
+    <div class="bg-white rounded-3xl p-4 border border-rose-950/5 shadow-xs space-y-3">
+      <div class="relative">
+        <span class="absolute inset-y-0 left-0 flex items-center pl-3">
+          <i data-lucide="search" class="text-slate-400 w-4 h-4"></i>
+        </span>
+        <input 
+          type="text" 
+          id="search-inventory" 
+          placeholder="Search products by SKU name..." 
+          class="w-full pl-9 pr-8 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary/20 transition"
+        />
+        <button id="clear-search" class="absolute inset-y-0 right-0 flex items-center pr-3 hidden">
+          <i data-lucide="x" class="text-slate-400 w-4 h-4 hover:text-rose-600 transition"></i>
+        </button>
+      </div>
+
+      <!-- Filters for quick triage -->
+      <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+        <button 
+          class="stock-filter-tab px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition border bg-primary text-white border-primary shrink-0" 
+          data-type="all"
+        >
+          All Items
+        </button>
+        <button 
+          class="stock-filter-tab px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition border bg-white text-slate-500 border-slate-200 shrink-0" 
+          data-type="low-stock"
+        >
+          Low Stock (&lt;5)
+        </button>
+        <button 
+          class="stock-filter-tab px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition border bg-white text-slate-500 border-slate-200 shrink-0" 
+          data-type="out-stock"
+        >
+          Out of Stock (0)
+        </button>
+        <button 
+          class="stock-filter-tab px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition border bg-white text-slate-500 border-slate-200 shrink-0" 
+          data-type="sold-only"
+        >
+          High Sales
+        </button>
+      </div>
+    </div>
+
+    <!-- Inventory Listing Details List -->
+    <div class="space-y-3">
+      <div class="flex items-center justify-between px-1">
+        <h3 class="text-xs font-bold text-slate-500 uppercase tracking-widest">Product Stock Audit</h3>
+        <span id="list-count" class="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-bold">0 Items</span>
+      </div>
+
+      <!-- Spinner -->
+      <div id="loader-spinner" class="flex flex-col items-center justify-center py-12 gap-3 text-slate-400">
+        <div class="w-8 h-8 rounded-full border-4 border-slate-200 border-t-primary animate-spin"></div>
+        <p class="text-[11px] font-medium font-mono uppercase tracking-widest">Syncing inventory...</p>
+      </div>
+
+      <!-- Empty State -->
+      <div id="empty-state" class="bg-white rounded-3xl p-8 text-center border border-rose-950/5 shadow-xs space-y-3 hidden">
+        <div class="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mx-auto text-slate-300">
+          <i data-lucide="package-open" class="w-6 h-6"></i>
+        </div>
+        <div class="space-y-1">
+          <h4 class="font-bold text-slate-700 text-xs">No Matching Stock</h4>
+          <p class="text-[10px] text-slate-400 max-w-[240px] mx-auto">Try refining your filter queries or check your active catalogs.</p>
+        </div>
+      </div>
+
+      <!-- Inventory Stack List -->
+      <div id="inventory-list" class="space-y-3">
+        <!-- Filled dynamically via JS -->
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Global Loader -->
+  <div id="global-loader" class="fixed inset-0 bg-primary/25 backdrop-blur-xs z-50 flex items-center justify-center transition-all duration-300 opacity-0 pointer-events-none">
+    <div class="bg-white p-5 rounded-3xl shadow-2xl flex flex-col items-center gap-3 border border-secondary/20 max-w-xs">
+      <div class="w-10 h-10 border-4 border-slate-200 border-t-primary rounded-full animate-spin"></div>
+      <p class="text-[10px] font-black text-rose-950 uppercase tracking-widest">Processing Data...</p>
+    </div>
+  </div>
+
+  <script type="module">
+    import { 
+      db, 
+      ref, 
+      get, 
+      onValue,
+      DB_ROOT, 
+      checkAdminSession, 
+      showToast, 
+      showLoader, 
+      hideLoader 
+    } from "./firebase-config.js";
+
+    let allProducts = {};
+    let allOrders = {};
+    let activeFilter = "all";
+    let activeSearchText = "";
+
+    document.addEventListener("DOMContentLoaded", async () => {
+      // Create Icons
+      lucide.createIcons();
+
+      // Session Check
+      const verified = await checkAdminSession();
+      if (!verified) {
+        window.location.href = "admin_login.html";
+        return;
+      }
+
+      const searchInput = document.getElementById("search-inventory");
+      const clearSearchBtn = document.getElementById("clear-search");
+      const inventoryList = document.getElementById("inventory-list");
+      const emptyState = document.getElementById("empty-state");
+      const loaderSpinner = document.getElementById("loader-spinner");
+      const listCount = document.getElementById("list-count");
+
+      // Load products and orders together to determine sold amounts
+      try {
+        const prodRef = ref(db, `${DB_ROOT}/products`);
+        const ordersRef = ref(db, `${DB_ROOT}/orders`);
+
+        // Attach listeners for live updates
+        onValue(prodRef, (prodSnap) => {
+          if (prodSnap.exists()) {
+            allProducts = prodSnap.val();
+          } else {
+            allProducts = {};
+          }
+          recalculateAndRender();
+        });
+
+        onValue(ordersRef, (orderSnap) => {
+          if (orderSnap.exists()) {
+            allOrders = orderSnap.val();
+          } else {
+            allOrders = {};
+          }
+          recalculateAndRender();
+        });
+
+      } catch (err) {
+        console.error("Error loading inventory:", err);
+        showToast("Error establishing persistent sync: " + err.message, "error");
+        loaderSpinner.classList.add("hidden");
+      }
+
+      function recalculateAndRender() {
+        loaderSpinner.classList.add("hidden");
+
+        // 1. Compute Sold units map per product SKU
+        const soldQtyMap = {};
+        let totalSoldUnits = 0;
+
+        Object.values(allOrders).forEach(order => {
+          // Ignore cancelled orders
+          if (order.status === "cancelled") return;
+
+          if (order.items) {
+            Object.entries(order.items).forEach(([pid, item]) => {
+              const qty = parseInt(item.qty || 0, 10);
+              soldQtyMap[pid] = (soldQtyMap[pid] || 0) + qty;
+              totalSoldUnits += qty;
+            });
+          }
+        });
+
+        // 2. Perform summary metrics computations
+        let totalRemainingValue = 0;
+        let uniqueSKUs = Object.keys(allProducts).length;
+        let lowStockSKUs = 0;
+
+        Object.entries(allProducts).forEach(([pid, prod]) => {
+          const price = parseFloat(prod.price || 0);
+          const stock = parseInt(prod.stock || 0, 10);
+          totalRemainingValue += (price * stock);
+
+          if (stock < 5) {
+            lowStockSKUs++;
+          }
+        });
+
+        // 3. Update dashboard metrics UI
+        document.getElementById("remaining-valuation").innerText = `₹${totalRemainingValue.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        document.getElementById("sold-units-count").innerText = `${totalSoldUnits} Units`;
+        document.getElementById("total-skus").innerText = `${uniqueSKUs} SKU${uniqueSKUs !== 1 ? 's' : ''}`;
+        document.getElementById("low-stock-count").innerText = `${lowStockSKUs} SKU${lowStockSKUs !== 1 ? 's' : ''}`;
+
+        // Alert badge UI highlighting
+        const alertBgIcon = document.getElementById("alert-bg-icon");
+        const alertIcon = document.getElementById("alert-icon");
+        if (lowStockSKUs > 0) {
+          alertBgIcon.className = "w-7 h-7 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center animate-bounce";
+        } else {
+          alertBgIcon.className = "w-7 h-7 rounded-lg bg-slate-100 text-slate-500 flex items-center justify-center";
+        }
+
+        // 4. Transform to array and apply filters
+        let listData = Object.entries(allProducts).map(([pid, prod]) => {
+          const soldCount = soldQtyMap[pid] || 0;
+          return {
+            id: pid,
+            ...prod,
+            soldCount: soldCount,
+            totalEarnings: soldCount * parseFloat(prod.price || 0)
+          };
+        });
+
+        // Apply active search text
+        if (activeSearchText) {
+          listData = listData.filter(p => p.name && p.name.toLowerCase().includes(activeSearchText.toLowerCase()));
+        }
+
+        // Apply active category filters
+        if (activeFilter === "low-stock") {
+          listData = listData.filter(p => parseInt(p.stock || 0, 10) < 5);
+        } else if (activeFilter === "out-stock") {
+          listData = listData.filter(p => parseInt(p.stock || 0, 10) === 0);
+        } else if (activeFilter === "sold-only") {
+          listData = listData.filter(p => p.soldCount > 0).sort((a, b) => b.soldCount - a.soldCount);
+        }
+
+        // Render UI
+        renderInventoryItems(listData);
+      }
+
+      function renderInventoryItems(items) {
+        inventoryList.innerHTML = "";
+        listCount.innerText = `${items.length} Item${items.length !== 1 ? 's' : ''}`;
+
+        if (items.length === 0) {
+          emptyState.classList.remove("hidden");
+          return;
+        }
+
+        emptyState.classList.add("hidden");
+
+        items.forEach(item => {
+          const currentStock = parseInt(item.stock || 0, 10);
+          const price = parseFloat(item.price || 0);
+          
+          let alertBadge = "";
+          let stockBarColor = "bg-emerald-500";
+          let textStatus = "text-emerald-700 bg-emerald-50 border-emerald-100";
+
+          if (currentStock === 0) {
+            alertBadge = `<span class="bg-rose-50 text-rose-700 border border-rose-200 uppercase font-black tracking-widest text-[8px] px-2 py-0.5 rounded-md">OUT OF STOCK</span>`;
+            stockBarColor = "bg-rose-500";
+            textStatus = "text-rose-700 bg-rose-50 border-rose-100";
+          } else if (currentStock < 5) {
+            alertBadge = `<span class="bg-amber-50 text-amber-700 border border-amber-200 uppercase font-bold tracking-wider text-[8px] px-2 py-0.5 rounded-md">LOW STOCK</span>`;
+            stockBarColor = "bg-custom bg-amber-500";
+            textStatus = "text-amber-700 bg-amber-50 border-amber-100";
+          } else {
+            alertBadge = `<span class="bg-emerald-50 text-emerald-700 border border-emerald-200 uppercase font-bold tracking-wider text-[8px] px-2 py-0.5 rounded-md">ADEQUATE</span>`;
+            stockBarColor = "bg-emerald-500";
+            textStatus = "text-emerald-700 bg-emerald-100 border-emerald-200";
+          }
+
+          const card = document.createElement("div");
+          card.className = "bg-white rounded-3xl p-4 border border-rose-950/5 shadow-xs space-y-3.5 relative overflow-hidden transition hover:shadow-sm";
+          
+          const progressPercent = Math.min(100, Math.max(0, (currentStock / 50) * 100));
+
+          const fallbackImage = "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&q=80&w=200";
+          const productImg = item.imageUrl || fallbackImage;
+
+          card.innerHTML = `
+            <div class="flex items-start gap-3">
+              <img 
+                src="${productImg}" 
+                alt="${item.name}" 
+                referrerpolicy="no-referrer"
+                class="w-12 h-12 rounded-xl object-cover border border-slate-100 bg-slate-50 shrink-0"
+              />
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-1.5 flex-wrap">
+                  <span class="text-[9px] font-mono text-slate-400 font-bold uppercase">${item.id}</span>
+                  ${alertBadge}
+                </div>
+                <h4 class="font-bold text-slate-800 text-xs mt-0.5 truncate leading-tight">${item.name}</h4>
+                <p class="text-[10px] text-slate-400 mt-0.5">${item.description || "No description catalogued"}</p>
+              </div>
+            </div>
+
+            <!-- Double Stock details -->
+            <div class="grid grid-cols-2 gap-3 bg-slate-50/70 p-3 rounded-2xl border border-dashed border-slate-200/50 text-[11px]">
+              <!-- Remaining Stock Details -->
+              <div class="space-y-1">
+                <div class="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Remaining Stock</div>
+                <div class="flex items-baseline gap-1">
+                  <span class="font-bold text-slate-800 text-xs">${currentStock} Units</span>
+                  <span class="text-[9px] text-slate-400">val: ₹${(price * currentStock).toFixed(2)}</span>
+                </div>
+                <!-- Mini Progress Bar -->
+                <div class="w-full bg-slate-200 rounded-full h-1 mt-1 overflow-hidden">
+                  <div class="h-full ${stockBarColor} rounded-full" style="width: ${progressPercent}%"></div>
+                </div>
+              </div>
+
+              <!-- Sold Stock Details -->
+              <div class="space-y-1 border-l border-dashed border-slate-200 pl-3">
+                <div class="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Sold Stock</div>
+                <div class="flex items-baseline gap-1">
+                  <span class="font-bold text-slate-800 text-xs">${item.soldCount} Units</span>
+                  <span class="text-[9px] text-slate-400">sum: ₹${item.totalEarnings.toFixed(2)}</span>
+                </div>
+                <div class="w-full bg-slate-200 rounded-full h-1 mt-1 overflow-hidden">
+                  <div class="h-full bg-indigo-500 rounded-full" style="width: ${Math.min(100, (item.soldCount / 30) * 100)}%"></div>
+                </div>
+              </div>
+            </div>
+          `;
+
+          inventoryList.appendChild(card);
+        });
+
+        lucide.createIcons();
+      }
+
+      // Handle query live search inputs
+      searchInput.oninput = (e) => {
+        activeSearchText = e.target.value;
+        if (activeSearchText) {
+          clearSearchBtn.classList.remove("hidden");
+        } else {
+          clearSearchBtn.classList.add("hidden");
+        }
+        recalculateAndRender();
+      };
+
+      clearSearchBtn.onclick = () => {
+        searchInput.value = "";
+        activeSearchText = "";
+        clearSearchBtn.classList.add("hidden");
+        recalculateAndRender();
+      };
+
+      // Filter tabs switching action listeners
+      document.querySelectorAll(".stock-filter-tab").forEach(tab => {
+        tab.onclick = (e) => {
+          document.querySelectorAll(".stock-filter-tab").forEach(t => {
+            t.className = "stock-filter-tab px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition border bg-white text-slate-500 border-slate-200 shrink-0";
+          });
+
+          activeFilter = e.currentTarget.getAttribute("data-type");
+
+          if (activeFilter === "all") {
+            e.currentTarget.className = "stock-filter-tab px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition border bg-primary text-white border-primary shrink-0";
+          } else if (activeFilter === "low-stock") {
+            e.currentTarget.className = "stock-filter-tab px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition border bg-amber-500 text-white border-amber-500 shrink-0";
+          } else if (activeFilter === "out-stock") {
+            e.currentTarget.className = "stock-filter-tab px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition border bg-rose-500 text-white border-rose-500 shrink-0";
+          } else if (activeFilter === "sold-only") {
+            e.currentTarget.className = "stock-filter-tab px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition border bg-indigo-500 text-white border-indigo-500 shrink-0";
+          }
+
+          recalculateAndRender();
+        };
+      });
+
+    });
+  </script>
+</body>
+</html>

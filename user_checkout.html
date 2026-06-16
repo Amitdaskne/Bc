@@ -320,7 +320,7 @@
             totalItems: checkoutQtyTotal,
             grandTotal: parseFloat(parseFloat(checkoutSumTotal).toFixed(2)),
             advanceAmount: parseFloat(advanceVal.toFixed(2)),
-            finalAmount: parseFloat((checkoutSumTotal - advanceVal).toFixed(2)),
+            finalAmount: 0,
             notes: notesText,
             status: "pending",
             createdAt: Date.now()
