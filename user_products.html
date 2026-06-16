@@ -33,13 +33,14 @@
 
   <!-- Sticky Header -->
   <header class="sticky top-0 z-40 bg-primary text-white border-b-4 border-secondary shadow-md px-4 py-3 flex items-center justify-between font-sans">
-    <div class="flex items-center gap-2">
-      <a href="user_dashboard.html" class="w-9 h-9 hover:bg-black/20 rounded-xl flex items-center justify-center transition">
+    <div class="flex items-center gap-3">
+      <a href="user_dashboard.html" class="w-9 h-9 hover:bg-black/20 rounded-xl flex items-center justify-center transition shrink-0">
         <i data-lucide="chevron-left" class="text-secondary w-6 h-6"></i>
       </a>
+      <img id="app-logo" src="https://i.ibb.co/G3cK3wgC/IMG-20260602-010231.png" referrerpolicy="no-referrer" class="w-10 h-10 rounded-xl object-contain bg-white border border-secondary/40 shrink-0" alt="Logo">
       <div>
-        <h1 id="store-title-label" class="text-sm font-bold tracking-wide truncate max-w-[200px]">Store Catalog</h1>
-        <p class="text-[9px] uppercase font-semibold text-secondary tracking-widest leading-none mt-0.5">Book Order items</p>
+        <h1 class="text-xs font-semibold text-secondary tracking-widest uppercase leading-none mb-0.5">BHIKHARAM CHANDMAL</h1>
+        <h2 id="store-title-label" class="text-sm font-bold tracking-wide truncate max-w-[200px] leading-tight">Store Catalog</h2>
       </div>
     </div>
     
@@ -78,8 +79,29 @@
     </div>
 
     <!-- Loading spinner -->
-    <div id="products-spinner" class="py-12 flex justify-center">
-      <div class="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent"></div>
+    <div id="products-spinner" class="w-full space-y-4">
+      <div class="animate-pulse bg-white p-4 rounded-3xl border border-rose-950/5 flex gap-4">
+        <div class="w-16 h-16 bg-slate-200 rounded-2xl shrink-0"></div>
+        <div class="flex-1 space-y-3 py-1">
+          <div class="h-3.5 bg-slate-200 rounded w-1/3"></div>
+          <div class="h-2.5 bg-slate-200 rounded w-1/2"></div>
+          <div class="flex gap-2 pt-1">
+            <div class="h-2 bg-slate-200 rounded w-12"></div>
+            <div class="h-2 bg-slate-200 rounded w-12"></div>
+          </div>
+        </div>
+      </div>
+      <div class="animate-pulse bg-white p-4 rounded-3xl border border-rose-950/5 flex gap-4">
+        <div class="w-16 h-16 bg-slate-200 rounded-2xl shrink-0"></div>
+        <div class="flex-1 space-y-3 py-1">
+          <div class="h-3.5 bg-slate-200 rounded w-1/4"></div>
+          <div class="h-2.5 bg-slate-200 rounded w-2/3"></div>
+          <div class="flex gap-2 pt-1">
+            <div class="h-2 bg-slate-200 rounded w-10"></div>
+            <div class="h-2 bg-slate-200 rounded w-10"></div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Products Cards List -->
@@ -179,7 +201,9 @@
         const storeSnap = await get(ref(db, `${DB_ROOT}/stores/${storeId}`));
         if (storeSnap.exists()) {
           storeDetails = storeSnap.val();
-          storeTitleLabel.innerText = storeDetails.name;
+          if (storeTitleLabel) {
+            storeTitleLabel.innerText = storeDetails.name;
+          }
         } else {
           showToast("Catalog error: Store configuration not found.", "error");
           setTimeout(() => window.location.href = "user_dashboard.html", 1500);
@@ -236,7 +260,9 @@
           });
         }
 
-        productCountBadge.innerText = `${filtered.length} items`;
+        if (productCountBadge) {
+          productCountBadge.innerText = `${filtered.length} items`;
+        }
 
         if (filtered.length === 0) {
           emptyState.classList.remove("hidden");
@@ -453,9 +479,15 @@
           cumulativeSum += item.price * item.qty;
         });
 
-        cartQtyBadge.innerText = totalQty;
-        stickyCartCount.innerText = totalQty;
-        stickyCartTotal.innerText = `₹${cumulativeSum.toFixed(2)}`;
+        if (cartQtyBadge) {
+          cartQtyBadge.innerText = totalQty;
+        }
+        if (stickyCartCount) {
+          stickyCartCount.innerText = totalQty;
+        }
+        if (stickyCartTotal) {
+          stickyCartTotal.innerText = `₹${cumulativeSum.toFixed(2)}`;
+        }
 
         // Expand or shrink bar depending on cart emptiness
         if (totalQty > 0) {

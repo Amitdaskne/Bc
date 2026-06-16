@@ -33,13 +33,14 @@
 
   <!-- Sticky Header -->
   <header class="sticky top-0 z-40 bg-primary text-white border-b-4 border-secondary shadow-md px-4 py-3 flex items-center justify-between">
-    <div class="flex items-center gap-2">
-      <a href="admin_dashboard.html" class="w-9 h-9 hover:bg-black/20 rounded-xl flex items-center justify-center transition">
+    <div class="flex items-center gap-3">
+      <a href="admin_dashboard.html" class="w-9 h-9 hover:bg-black/20 rounded-xl flex items-center justify-center transition shrink-0">
         <i data-lucide="chevron-left" class="text-secondary w-6 h-6"></i>
       </a>
+      <img id="app-logo" src="https://i.ibb.co/G3cK3wgC/IMG-20260602-010231.png" referrerpolicy="no-referrer" class="w-10 h-10 rounded-xl object-contain bg-white border border-secondary/40 shrink-0" alt="Logo">
       <div>
-        <h1 class="text-sm font-bold tracking-wider leading-tight">STORE ASSIGNMENTS</h1>
-        <p class="text-[10px] font-semibold text-secondary tracking-widest uppercase">Admin Operations</p>
+        <h1 class="text-sm font-bold tracking-wider leading-tight">BHIKHARAM CHANDMAL</h1>
+        <p class="text-[10px] font-semibold text-secondary tracking-widest uppercase">Store Assignments</p>
       </div>
     </div>
     <div class="flex items-center gap-1 bg-[#ffd54a]/10 border border-[#ffd54a]/30 px-2.5 py-1 rounded-full">
@@ -121,8 +122,21 @@
       <h3 class="text-xs font-bold text-slate-500 uppercase tracking-widest pl-1">Roster Allocation Summary</h3>
       
       <!-- summary spinner -->
-      <div id="summary-spin" class="py-6 flex justify-center">
-        <div class="animate-spin rounded-full h-6 w-6 border-2 border-primary border-t-transparent"></div>
+      <div id="summary-spin" class="w-full space-y-2 py-3">
+        <div class="animate-pulse flex items-center space-x-3 bg-slate-50 p-2.5 rounded-2xl border border-rose-950/5">
+          <div class="rounded-full bg-slate-200 h-6 w-6 shrink-0"></div>
+          <div class="flex-1 space-y-2">
+            <div class="h-2.5 bg-slate-200 rounded w-1/3"></div>
+            <div class="h-2 bg-slate-200 rounded w-1/2"></div>
+          </div>
+        </div>
+        <div class="animate-pulse flex items-center space-x-3 bg-slate-50 p-2.5 rounded-2xl border border-rose-950/5">
+          <div class="rounded-full bg-slate-200 h-6 w-6 shrink-0"></div>
+          <div class="flex-1 space-y-2">
+            <div class="h-2.5 bg-slate-200 rounded w-1/4"></div>
+            <div class="h-2 bg-slate-200 rounded w-1/3"></div>
+          </div>
+        </div>
       </div>
 
       <div id="assignment-summary" class="space-y-2.5 text-xs text-slate-600">

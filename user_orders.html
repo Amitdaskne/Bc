@@ -37,18 +37,21 @@
   <!-- Sticky Header -->
   <header class="sticky top-0 z-40 bg-primary text-white border-b-4 border-secondary shadow-md px-4 py-3 flex items-center justify-between font-sans">
     <div class="flex items-center gap-3">
-      <div id="user-header-dp" class="w-10 h-10 rounded-full border border-secondary bg-white/10 overflow-hidden flex items-center justify-center shrink-0">
-        <i data-lucide="user" class="text-secondary w-5 h-5"></i>
-      </div>
+      <a href="user_dashboard.html" class="w-9 h-9 hover:bg-black/20 rounded-xl flex items-center justify-center transition shrink-0">
+        <i data-lucide="chevron-left" class="text-secondary w-6 h-6"></i>
+      </a>
+      <img id="app-logo" src="https://i.ibb.co/G3cK3wgC/IMG-20260602-010231.png" referrerpolicy="no-referrer" class="w-10 h-10 rounded-xl object-contain bg-white border border-secondary/40 shrink-0" alt="Logo">
       <div>
-        <h1 class="text-sm font-bold tracking-wide leading-tight">MY ORDER BOOKINGS</h1>
-        <p class="text-[9px] uppercase font-semibold text-secondary tracking-widest leading-none mt-0.5">Sales Agent Overview</p>
+        <h1 class="text-sm font-bold tracking-wider leading-tight">BHIKHARAM CHANDMAL</h1>
+        <p class="text-[9px] uppercase font-semibold text-secondary tracking-widest leading-none mt-0.5">My Order Bookings</p>
       </div>
     </div>
     
-    <div class="flex items-[#ffd54a] gap-1 bg-[#ffd54a]/10 border border-[#ffd54a]/30 px-2.5 py-1 rounded-full shrink-0">
-      <i data-lucide="package" class="w-3.5 h-3.5 text-secondary animate-pulse"></i>
-      <span id="order-count-badge" class="text-[10px] text-secondary font-bold">0 Bookings</span>
+    <div class="flex items-center gap-2">
+      <span id="order-count-badge" class="bg-[#ffd54a]/20 text-[#ffd54a] border border-[#ffd54a]/30 px-2.5 py-0.5 rounded-full text-[10px] font-bold">0 Bookings</span>
+      <div id="user-header-dp" class="w-8 h-8 rounded-full border border-secondary bg-white/10 overflow-hidden flex items-center justify-center shrink-0">
+        <i data-lucide="user" class="text-secondary w-4 h-4"></i>
+      </div>
     </div>
   </header>
 
@@ -63,8 +66,27 @@
     </div>
 
     <!-- Live loader placeholder -->
-    <div id="orders-spinner" class="py-12 flex justify-center">
-      <div class="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent"></div>
+    <div id="orders-spinner" class="w-full space-y-4">
+      <div class="animate-pulse bg-white p-5 rounded-3xl border border-rose-950/5 space-y-3">
+        <div class="flex justify-between items-center pb-2 border-b border-slate-100">
+          <div class="h-3.5 bg-slate-200 rounded w-1/4"></div>
+          <div class="h-3 bg-slate-200 rounded w-1/6"></div>
+        </div>
+        <div class="space-y-2">
+          <div class="h-3 bg-slate-200 rounded w-2/3"></div>
+          <div class="h-2.5 bg-slate-200 rounded w-1/2"></div>
+        </div>
+      </div>
+      <div class="animate-pulse bg-white p-5 rounded-3xl border border-rose-950/5 space-y-3">
+        <div class="flex justify-between items-center pb-2 border-b border-slate-100">
+          <div class="h-3.5 bg-slate-200 rounded w-1/3"></div>
+          <div class="h-3 bg-slate-200 rounded w-1/5"></div>
+        </div>
+        <div class="space-y-2">
+          <div class="h-3 bg-slate-200 rounded w-3/4"></div>
+          <div class="h-2.5 bg-slate-200 rounded w-2/3"></div>
+        </div>
+      </div>
     </div>
 
     <!-- Booking history cards listing -->
@@ -250,7 +272,9 @@
       // Local filters logic
       function applyFilters() {
         const oEntries = Object.entries(allOrders);
-        orderCountBadge.innerText = `${oEntries.length} Bookings`;
+        if (orderCountBadge) {
+          orderCountBadge.innerText = `${oEntries.length} Bookings`;
+        }
 
         let filtered = oEntries;
         if (activeFilter !== "all") {
@@ -448,16 +472,28 @@
           doc.setFillColor(...accentColor);
           doc.rect(0, 38, 210, 2.5, "F");
 
+          // Draw the Logo in PDF
+          const logoImg = document.getElementById("app-logo");
+          if (logoImg) {
+            try {
+              doc.setFillColor(255, 255, 255);
+              doc.roundedRect(14, 5, 14, 14, 3, 3, "F");
+              doc.addImage(logoImg, "PNG", 15, 6, 12, 12);
+            } catch (err) {
+              console.error("Error adding PDF logo:", err);
+            }
+          }
+
           // Branding text
           doc.setTextColor(255, 255, 255);
           doc.setFont("Helvetica", "bold");
-          doc.setFontSize(14);
-          doc.text("BHIKHARAM CHANDMAL ORDER MANAGEMENT SYSTEM", 14, 15);
+          doc.setFontSize(16);
+          doc.text("BHIKHARAM CHANDMAL", 31, 13);
           
           doc.setFont("Helvetica", "normal");
-          doc.setFontSize(9);
+          doc.setFontSize(8.5);
           doc.setTextColor(...accentColor);
-          doc.text("OFFICIAL SALES BOOKING RECEIPT & INVOICE", 14, 21);
+          doc.text("OFFICIAL SALES BOOKING RECEIPT & INVOICE", 31, 19);
 
           // Meta Info (Right aligned)
           doc.setTextColor(255, 255, 255);
@@ -524,7 +560,7 @@
             bodyStyles: { fontSize: 8.5 },
             columnStyles: {
               0: { cellWidth: 23 },
-              1: { cellWidth: 83 },
+              1: { cellWidth: 'auto' },
               2: { cellWidth: 23, halign: 'right' },
               3: { cellWidth: 18, halign: 'center' },
               4: { cellWidth: 23, halign: 'right' }

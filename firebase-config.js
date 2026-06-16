@@ -225,6 +225,56 @@ async function logoutUser() {
   }
 }
 
+/**
+ * Elegant Confirmation Pop-up modal
+ */
+function showConfirmPopup(title, message) {
+  return new Promise((resolve) => {
+    let popup = document.getElementById("confirm-popup-modal");
+    if (popup) popup.remove();
+
+    popup = document.createElement("div");
+    popup.id = "confirm-popup-modal";
+    popup.className = "fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 flex items-center justify-center p-4 transition-all duration-300";
+    popup.innerHTML = `
+      <div class="bg-white rounded-[24px] max-w-sm w-full p-6 shadow-2xl border border-rose-950/5 transform transition-all scale-100 space-y-4">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 bg-rose-50 rounded-xl flex items-center justify-center border border-rose-200 shrink-0">
+            <svg class="w-5 h-5 text-[#7d0000]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+            </svg>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-slate-800">${title}</h3>
+            <p class="text-[11px] text-slate-500 font-medium">Please review carefully</p>
+          </div>
+        </div>
+        <p class="text-xs text-slate-600 leading-relaxed">${message}</p>
+        <div class="flex items-center gap-2 pt-2">
+          <button id="confirm-popup-cancel" class="flex-1 py-2.5 px-4 bg-slate-100 hover:bg-slate-200 rounded-xl text-xs font-semibold text-slate-700 transition active:scale-95 cursor-pointer">
+            Cancel
+          </button>
+          <button id="confirm-popup-ok" class="flex-1 py-2.5 px-4 bg-[#7d0000] hover:bg-rose-950 text-white rounded-xl text-xs font-semibold shadow-xs hover:shadow-md transition active:scale-95 cursor-pointer">
+            Confirm
+          </button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(popup);
+
+    const cleanup = (val) => {
+      popup.remove();
+      resolve(val);
+    };
+
+    document.getElementById("confirm-popup-cancel").onclick = () => cleanup(false);
+    document.getElementById("confirm-popup-ok").onclick = () => cleanup(true);
+  });
+}
+
+// Bind to window for absolute ease of global access
+window.showConfirmPopup = showConfirmPopup;
+
 export {
   db,
   ref,
@@ -244,5 +294,6 @@ export {
   checkAdminSession,
   checkUserSession,
   logoutAdmin,
-  logoutUser
+  logoutUser,
+  showConfirmPopup
 };

@@ -34,19 +34,21 @@
   <!-- Sticky Header -->
   <header class="sticky top-0 z-40 bg-primary text-white border-b-4 border-secondary shadow-md px-4 py-3 flex items-center justify-between">
     <div class="flex items-center gap-3">
-      <div id="user-header-dp" class="w-10 h-10 rounded-full border border-secondary bg-white/10 overflow-hidden flex items-center justify-center shrink-0">
-        <i data-lucide="user" class="text-secondary w-5 h-5"></i>
-      </div>
+      <img id="app-logo" src="https://i.ibb.co/G3cK3wgC/IMG-20260602-010231.png" referrerpolicy="no-referrer" class="w-10 h-10 rounded-xl object-contain bg-white border border-secondary/40 shrink-0" alt="Logo">
       <div>
-        <h1 id="user-welcome" class="text-sm font-bold tracking-wide leading-tight">Sales Dashboard</h1>
-        <p class="text-[9px] uppercase font-semibold text-secondary tracking-widest leading-none mt-0.5">Authorised Booking Agent</p>
+        <h1 class="text-sm font-bold tracking-wider leading-tight">BHIKHARAM CHANDMAL</h1>
+        <p class="text-[9px] uppercase font-semibold text-secondary tracking-widest leading-none mt-0.5">Sales Portal</p>
       </div>
     </div>
     
-    <div class="flex items-center gap-2">
+    <div class="flex items-center gap-3">
+      <span id="user-welcome" class="hidden"></span>
       <a href="user_orders.html" class="relative w-9 h-9 hover:bg-black/10 rounded-xl flex items-center justify-center transition" title="Order History">
         <i data-lucide="history" class="text-secondary w-5 h-5"></i>
       </a>
+      <div id="user-header-dp" class="w-8 h-8 rounded-full border border-secondary bg-white/10 overflow-hidden flex items-center justify-center shrink-0">
+        <i data-lucide="user" class="text-secondary w-4 h-4"></i>
+      </div>
     </div>
   </header>
 
@@ -72,8 +74,21 @@
     </div>
 
     <!-- Live loader placeholder -->
-    <div id="dashboard-spinner" class="py-12 flex justify-center">
-      <div class="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent"></div>
+    <div id="dashboard-spinner" class="w-full space-y-4 font-sans">
+      <div class="animate-pulse flex items-center space-x-4 bg-white p-4 rounded-3xl border border-rose-950/5">
+        <div class="rounded-full bg-slate-200 h-11 w-11 shrink-0"></div>
+        <div class="flex-1 space-y-3 py-1">
+          <div class="h-3 bg-slate-200 rounded w-1/3"></div>
+          <div class="h-2.5 bg-slate-200 rounded w-2/3"></div>
+        </div>
+      </div>
+      <div class="animate-pulse flex items-center space-x-4 bg-white p-4 rounded-3xl border border-rose-950/5">
+        <div class="rounded-full bg-slate-200 h-11 w-11 shrink-0"></div>
+        <div class="flex-1 space-y-3 py-1">
+          <div class="h-3 bg-slate-200 rounded w-1/4"></div>
+          <div class="h-2.5 bg-slate-200 rounded w-1/2"></div>
+        </div>
+      </div>
     </div>
 
     <!-- List of assigned stores -->
@@ -138,8 +153,12 @@
       const spinner = document.getElementById("dashboard-spinner");
 
       // Render customized greeters
-      userWelcome.innerText = verified.name || verified.username;
-      dashboardGreet.innerText = `Welcome, ${verified.name || 'Agent'}!`;
+      if (userWelcome) {
+        userWelcome.innerText = verified.name || verified.username;
+      }
+      if (dashboardGreet) {
+        dashboardGreet.innerText = `Welcome, ${verified.name || 'Agent'}!`;
+      }
 
       // Fetch user profile details to populate custom DP if available
       try {
@@ -166,7 +185,9 @@
 
         if (!hasAssignments || !hasStores) {
           emptyState.classList.remove("hidden");
-          storesCountBadge.innerText = "0 Stores";
+          if (storesCountBadge) {
+            storesCountBadge.innerText = "0 Stores";
+          }
           return;
         }
 
@@ -178,7 +199,9 @@
           return myAssignmentsMap[sid] === true;
         });
 
-        storesCountBadge.innerText = `${allocatedStoresList.length} Stores`;
+        if (storesCountBadge) {
+          storesCountBadge.innerText = `${allocatedStoresList.length} Stores`;
+        }
 
         if (allocatedStoresList.length === 0) {
           emptyState.classList.remove("hidden");
