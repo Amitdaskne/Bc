@@ -54,6 +54,47 @@
 
   <main class="max-w-md mx-auto p-4 space-y-6">
 
+    <!-- Report Options Period Filter Selector Card -->
+    <div class="bg-white rounded-3xl p-4.5 border border-rose-950/5 shadow-xs space-y-3.5">
+      <div class="flex items-center justify-between">
+        <div>
+          <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Report Filter Period</h3>
+          <p class="text-[9px] text-slate-400">Select reporting period to view stats & download PDF</p>
+        </div>
+        <div class="w-8 h-8 rounded-full bg-rose-50 flex items-center justify-center text-primary">
+          <i data-lucide="calendar" class="w-4 h-4 text-primary"></i>
+        </div>
+      </div>
+
+      <!-- Filter Period Toggle Grid -->
+      <div class="grid grid-cols-4 gap-1 bg-slate-100/80 p-1 rounded-2xl text-[9px] font-extrabold tracking-tight">
+        <button id="btn-filter-all" class="filter-tab-btn py-2 text-center rounded-xl bg-primary text-secondary shadow-xs scale-100 transition active:scale-95 cursor-pointer" data-period="all">
+          ALL TIME
+        </button>
+        <button id="btn-filter-today" class="filter-tab-btn py-2 text-center rounded-xl text-slate-600 hover:text-slate-900 transition active:scale-95 cursor-pointer" data-period="today">
+          TODAY
+        </button>
+        <button id="btn-filter-week" class="filter-tab-btn py-2 text-center rounded-xl text-slate-600 hover:text-slate-900 transition active:scale-95 cursor-pointer" data-period="week">
+          THIS WEEK
+        </button>
+        <button id="btn-filter-custom" class="filter-tab-btn py-2 text-center rounded-xl text-slate-600 hover:text-slate-900 transition active:scale-95 cursor-pointer" data-period="custom">
+          CUSTOM
+        </button>
+      </div>
+
+      <!-- Custom Date Inputs -->
+      <div id="custom-date-block" class="hidden grid grid-cols-2 gap-3 pt-2.5 border-t border-dashed border-slate-200/60">
+        <div class="space-y-1">
+          <label class="block text-[8px] font-bold text-slate-400 uppercase tracking-widest pl-0.5">Start Date</label>
+          <input type="date" id="input-start-date" class="w-full bg-slate-50 border border-slate-100 rounded-xl px-2.5 py-2 text-xs font-bold text-slate-700 focus:outline-hidden focus:border-primary/50">
+        </div>
+        <div class="space-y-1">
+          <label class="block text-[8px] font-bold text-slate-400 uppercase tracking-widest pl-0.5">End Date</label>
+          <input type="date" id="input-end-date" class="w-full bg-slate-50 border border-slate-100 rounded-xl px-2.5 py-2 text-xs font-bold text-slate-700 focus:outline-hidden focus:border-primary/50">
+        </div>
+      </div>
+    </div>
+
     <!-- Financial Revenue Metrics Grid -->
     <div class="space-y-3">
       <div class="flex items-center justify-between pl-1">
@@ -193,11 +234,99 @@
 
       // Dynamic variables
       let allOrders = {};
+      let currentPeriod = "all"; // "all", "today", "week", "custom"
+
+      // Initialize custom date pickers defaults
+      const todayString = new Date().toISOString().slice(0, 10);
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      const sevenDaysAgoString = sevenDaysAgo.toISOString().slice(0, 10);
+
+      document.getElementById("input-start-date").value = sevenDaysAgoString;
+      document.getElementById("input-end-date").value = todayString;
+
+      // Filter period UI controls binding
+      const filterButtons = document.querySelectorAll(".filter-tab-btn");
+      const customDateBlock = document.getElementById("custom-date-block");
+
+      filterButtons.forEach(btn => {
+        btn.onclick = (e) => {
+          const selected = e.currentTarget.getAttribute("data-period");
+          currentPeriod = selected;
+
+          // Toggle classes
+          filterButtons.forEach(b => {
+            b.className = "filter-tab-btn py-2 text-center rounded-xl text-slate-600 hover:text-slate-900 transition active:scale-95 cursor-pointer";
+          });
+          e.currentTarget.className = "filter-tab-btn py-2 text-center rounded-xl bg-primary text-secondary shadow-xs scale-100 transition active:scale-95 cursor-pointer";
+
+          // Show/Hide custom date inputs
+          if (selected === "custom") {
+            customDateBlock.classList.remove("hidden");
+          } else {
+            customDateBlock.classList.add("hidden");
+          }
+
+          compileSalesReport();
+        };
+      });
+
+      // Recalculate on date inputs change
+      document.getElementById("input-start-date").onchange = () => {
+        if (currentPeriod === "custom") compileSalesReport();
+      };
+      document.getElementById("input-end-date").onchange = () => {
+        if (currentPeriod === "custom") compileSalesReport();
+      };
+
+      function getFilteredOrders() {
+        if (!allOrders || Object.keys(allOrders).length === 0) return [];
+        
+        const now = new Date();
+        const startOfToday = new Date();
+        startOfToday.setHours(0, 0, 0, 0);
+
+        const endOfToday = new Date();
+        endOfToday.setHours(23, 59, 59, 999);
+
+        // Trailing 7 days for "This Week" (These Week) as requested
+        const startOfWeek = new Date();
+        startOfWeek.setDate(startOfWeek.getDate() - 7);
+        startOfWeek.setHours(0, 0, 0, 0);
+
+        return Object.entries(allOrders).filter(([key, o]) => {
+          if (o.status === "cancelled") return false;
+          if (!o.createdAt) return currentPeriod === "all";
+
+          const ts = parseInt(o.createdAt, 10);
+          if (isNaN(ts)) return currentPeriod === "all";
+
+          if (currentPeriod === "today") {
+            return ts >= startOfToday.getTime() && ts <= endOfToday.getTime();
+          } else if (currentPeriod === "week") {
+            return ts >= startOfWeek.getTime() && ts <= endOfToday.getTime();
+          } else if (currentPeriod === "custom") {
+            const startInput = document.getElementById("input-start-date").value;
+            const endInput = document.getElementById("input-end-date").value;
+            if (!startInput || !endInput) return true; // show all if invalid inputs
+
+            const customStart = new Date(startInput);
+            customStart.setHours(0, 0, 0, 0);
+
+            const customEnd = new Date(endInput);
+            customEnd.setHours(23, 59, 59, 999);
+
+            return ts >= customStart.getTime() && ts <= customEnd.getTime();
+          }
+          return true; // all
+        });
+      }
 
       // Click handler for Export PDF
       document.getElementById("export-sales-pdf").onclick = () => {
-        if (!allOrders || Object.keys(allOrders).length === 0) {
-          showToast("No sales records available to export.", "error");
+        const activeOrders = getFilteredOrders();
+        if (activeOrders.length === 0) {
+          showToast("No active sales records within the chosen period to export.", "error");
           return;
         }
 
@@ -235,6 +364,27 @@
           doc.setTextColor(...accentColor);
           doc.text("STORE MANAGEMENT & SALES FINANCIAL LEDGER", 14, 21);
 
+          // Get period label
+          let scopeText = "ALL TIME FINANCIALS";
+          if (currentPeriod === "today") {
+            scopeText = `TODAY'S LEDGER (${new Date().toLocaleDateString("en-IN", { day: 'numeric', month: 'short', year: 'numeric' })})`;
+          } else if (currentPeriod === "week") {
+            const startOfWeek = new Date();
+            startOfWeek.setDate(startOfWeek.getDate() - 7);
+            scopeText = `THIS WEEK (${startOfWeek.toLocaleDateString("en-IN", { day: 'numeric', month: 'short' })} TO ${new Date().toLocaleDateString("en-IN", { day: 'numeric', month: 'short', year: 'numeric' })})`;
+          } else if (currentPeriod === "custom") {
+            const startInput = document.getElementById("input-start-date").value;
+            const endInput = document.getElementById("input-end-date").value;
+            if (startInput && endInput) {
+              const d1 = new Date(startInput).toLocaleDateString("en-IN", { day: 'numeric', month: 'short' });
+              const d2 = new Date(endInput).toLocaleDateString("en-IN", { day: 'numeric', month: 'short', year: 'numeric' });
+              scopeText = `CUSTOM DATES (${d1} TO ${d2})`;
+            } else {
+              scopeText = "CUSTOM RANGE (UNSPECIFIED)";
+            }
+          }
+          doc.text(`REPORT PERIOD: ${scopeText.toUpperCase()}`, 14, 25);
+
           // Meta Info (Right aligned)
           doc.setTextColor(255, 255, 255);
           doc.setFontSize(8);
@@ -248,11 +398,12 @@
           // Document Title Section
           doc.setFont("Helvetica", "bold");
           doc.setFontSize(12);
-          doc.text("FINANCIAL REVENUE AUDIT REPORT", 14, 50);
-
-          // Recalculate metrics on the fly for PDF
-          const activeOrders = Object.entries(allOrders).filter(([key, o]) => o.status !== "cancelled");
+          doc.text("FINANCIAL REVENUE AUDIT REPORT", 14, 48);
           
+          doc.setFont("Helvetica", "normal");
+          doc.setFontSize(9);
+          doc.text(`Fulfillment Period scope check: ${scopeText}`, 14, 53);
+
           let totalSalesRevenue = 0;
           let totalCollected = 0;
           let totalValOutstanding = 0;
@@ -309,7 +460,7 @@
           const avgVal = activeOrders.length > 0 ? (totalSalesRevenue / activeOrders.length) : 0;
 
           doc.autoTable({
-            startY: 55,
+            startY: 57,
             head: [['Financial Core Metrics KPI', 'Current Value Metrics']],
             body: [
               ['Total Booked Sales Revenue (Active orders)', `INR ${totalSalesRevenue.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`],
@@ -322,8 +473,8 @@
             headStyles: { fillColor: primaryColor, textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 10 },
             bodyStyles: { fontStyle: 'bold', fontSize: 9 },
             columnStyles: {
-              0: { cellWidth: 120 },
-              1: { cellWidth: 62, halign: 'right' }
+              0: { cellWidth: 115 },
+              1: { cellWidth: 57, halign: 'right' }
             }
           });
 
@@ -355,10 +506,10 @@
             headStyles: { fillColor: [40, 40, 40], textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 9 },
             bodyStyles: { fontSize: 8.5 },
             columnStyles: {
-              0: { cellWidth: 80 },
-              1: { cellWidth: 32, halign: 'center' },
-              2: { cellWidth: 42, halign: 'right' },
-              3: { cellWidth: 28, halign: 'center' }
+              0: { cellWidth: 75 },
+              1: { cellWidth: 28, halign: 'center' },
+              2: { cellWidth: 38, halign: 'right' },
+              3: { cellWidth: 25, halign: 'center' }
             }
           });
 
@@ -395,9 +546,9 @@
             bodyStyles: { fontSize: 8.5 },
             columnStyles: {
               0: { cellWidth: 15, halign: 'center' },
-              1: { cellWidth: 90 },
-              2: { cellWidth: 42, halign: 'center' },
-              3: { cellWidth: 35, halign: 'right' }
+              1: { cellWidth: 85 },
+              2: { cellWidth: 38, halign: 'center' },
+              3: { cellWidth: 30, halign: 'right' }
             }
           });
 
@@ -431,9 +582,9 @@
             headStyles: { fillColor: [40, 40, 40], textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 9 },
             bodyStyles: { fontSize: 8.5 },
             columnStyles: {
-              0: { cellWidth: 60 },
-              1: { cellWidth: 60, halign: 'center' },
-              2: { cellWidth: 62, halign: 'right' }
+              0: { cellWidth: 55 },
+              1: { cellWidth: 55, halign: 'center' },
+              2: { cellWidth: 57, halign: 'right' }
             }
           });
 
@@ -477,8 +628,8 @@
       }
 
       function compileSalesReport() {
-        // Collect orders while ignoring cancelled ones
-        const activeOrders = Object.entries(allOrders).filter(([key, o]) => o.status !== "cancelled");
+        // Collect orders while ignoring cancelled ones within chosen filter interval
+        const activeOrders = getFilteredOrders();
         
         let totalSalesRevenue = 0;
         let totalCollected = 0;
@@ -525,7 +676,7 @@
           // Daily stats calculation
           if (order.createdAt) {
             const dateObj = new Date(order.createdAt);
-            const dateStr = dateObj.toLocaleDateString("en-US", { year: 'numeric', month: '2-digit', day: '2-digit' }); // "MM/DD/YYYY" or similar stable formatted key
+            const dateStr = dateObj.toLocaleDateString("en-US", { year: 'numeric', month: '2-digit', day: '2-digit' }); // MM/DD/YYYY key
             const displayDateStr = dateObj.toLocaleDateString("en-IN", { day: 'numeric', month: 'short', year: 'numeric' });
             
             if (!dailySalesMap[dateStr]) {
@@ -555,7 +706,7 @@
         renderDailyTimeline(dailySalesMap);
 
         // 5. Render Transaction Ledger and Logs
-        renderTransactionLedger();
+        renderTransactionLedger(activeOrders);
       }
 
       // Store sales breakdown helper
@@ -653,16 +804,16 @@
       }
 
       // Render Transaction ledger audit summary
-      function renderTransactionLedger() {
+      function renderTransactionLedger(activeOrders) {
         ledgerList.innerHTML = "";
         // Sort descending all orders newest first
-        const allLedgerOrders = Object.entries(allOrders).sort((a,b) => (b[1].createdAt || 0) - (a[1].createdAt || 0));
+        const allLedgerOrders = [...activeOrders].sort((a,b) => (b[1].createdAt || 0) - (a[1].createdAt || 0));
 
         if (allLedgerOrders.length === 0) {
           ledgerList.innerHTML = `
             <div class="bg-white rounded-3xl p-6 text-center border border-rose-950/5 text-slate-400">
               <i data-lucide="folder-open" class="w-8 h-8 text-slate-300 mx-auto mb-2"></i>
-              <p class="text-[10px]">No ledger data available.</p>
+              <p class="text-[10px]">No ledger data available for the chosen scope.</p>
             </div>
           `;
           return;
