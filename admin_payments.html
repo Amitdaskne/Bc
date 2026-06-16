@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Payments & Collections Audit Ledger</title>
+  <!-- Google Fonts Poppins -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <!-- Tailwind CSS Play CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- jsPDF and AutoTable for Client-side PDF Exports -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#7d0000',
+            secondary: '#ffd54a',
+            bgsoft: '#f7f4ec',
+          },
+          fontFamily: {
+            sans: ['Poppins', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-bgsoft font-sans min-h-screen text-slate-800 pb-24">
+
+  <!-- Sticky Header -->
+  <header class="sticky top-0 z-40 bg-primary text-white border-b-4 border-secondary shadow-md px-4 py-3 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <a href="admin_dashboard.html" class="w-9 h-9 hover:bg-black/20 text-white rounded-xl flex items-center justify-center transition active:scale-95 shrink-0">
+        <i data-lucide="chevron-left" class="text-secondary w-6 h-6"></i>
+      </a>
+      <img id="app-logo" src="https://i.ibb.co/G3cK3wgC/IMG-20260602-010231.png" referrerpolicy="no-referrer" class="w-10 h-10 rounded-xl object-contain bg-white border border-secondary/40 shrink-0" alt="Logo">
+      <div>
+        <h1 class="text-sm font-bold tracking-wider leading-tight">BHIKHARAM CHANDMAL</h1>
+        <p class="text-[10px] font-semibold text-secondary tracking-widest uppercase font-sans">Payments Audit</p>
+      </div>
+    </div>
+    
+    <div class="px-2.5 py-1 bg-white/10 border border-white/20 rounded-lg text-[9px] font-bold text-secondary uppercase tracking-wider flex items-center gap-1">
+      <span class="w-1.5 h-1.5 bg-secondary rounded-full animate-ping"></span>
+      <span>Live Audit</span>
+    </div>
+  </header>
+
+  <main class="max-w-md mx-auto p-4 space-y-6">
+
+    <!-- Filter Card -->
+    <div class="bg-white rounded-3xl p-4.5 border border-rose-950/5 shadow-xs space-y-3.5">
+      <div class="flex items-center justify-between">
+        <div>
+          <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Payments Filter Period</h3>
+          <p class="text-[9px] text-slate-400">Select report duration to query collections</p>
+        </div>
+        <div class="w-8 h-8 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-700">
+          <i data-lucide="calendar" class="w-4 h-4"></i>
+        </div>
+      </div>
+
+      <!-- Quick Toggles -->
+      <div class="grid grid-cols-4 gap-1 bg-slate-100/80 p-1 rounded-2xl text-[9px] font-extrabold tracking-tight">
+        <button id="btn-period-all" class="period-btn py-2 text-center rounded-xl bg-primary text-secondary shadow-xs transition active:scale-95 cursor-pointer" data-period="all">
+          ALL TIME
+        </button>
+        <button id="btn-period-day" class="period-btn py-2 text-center rounded-xl text-slate-600 hover:text-slate-900 transition active:scale-95 cursor-pointer" data-period="day">
+          1 DAY
+        </button>
+        <button id="btn-period-week" class="period-btn py-2 text-center rounded-xl text-slate-600 hover:text-slate-900 transition active:scale-95 cursor-pointer" data-period="week">
+          1 WEEK
+        </button>
+        <button id="btn-period-custom" class="period-btn py-2 text-center rounded-xl text-slate-600 hover:text-slate-900 transition active:scale-95 cursor-pointer" data-period="custom">
+          CUSTOM
+        </button>
+      </div>
+
+      <!-- Custom Date Block -->
+      <div id="custom-date-block" class="hidden grid grid-cols-2 gap-3 pt-2.5 border-t border-dashed border-slate-200/60">
+        <div class="space-y-1">
+          <label class="block text-[8px] font-bold text-slate-400 uppercase tracking-widest pl-0.5">Start Date</label>
+          <input type="date" id="start-date-input" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-2 text-xs font-bold text-slate-700 focus:outline-none focus:border-primary/50">
+        </div>
+        <div class="space-y-1">
+          <label class="block text-[8px] font-bold text-slate-400 uppercase tracking-widest pl-0.5">End Date</label>
+          <input type="date" id="end-date-input" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-2 text-xs font-bold text-slate-700 focus:outline-none focus:border-primary/50">
+        </div>
+      </div>
+    </div>
+
+    <!-- Collection Stats Block -->
+    <div class="space-y-3">
+      <div class="flex items-center justify-between pl-1">
+        <h3 class="text-xs font-bold text-slate-500 uppercase tracking-widest">Reconciliation summaries</h3>
+        <button 
+          id="export-payments-pdf" 
+          class="flex items-center gap-1.5 bg-primary hover:bg-rose-950 text-secondary border border-secondary/40 rounded-xl px-3 py-1.5 text-[9px] font-extrabold tracking-wider transition active:scale-95 shadow-md cursor-pointer font-sans"
+        >
+          <i data-lucide="file-down" class="w-4 h-4 text-secondary"></i>
+          <span>DOWNLOAD PDF</span>
+        </button>
+      </div>
+
+      <!-- Main Sum Card -->
+      <div class="bg-gradient-to-br from-primary to-rose-950 rounded-3xl p-5 text-white shadow-xl relative overflow-hidden">
+        <!-- Background accents -->
+        <div class="absolute -right-6 -bottom-6 w-24 h-24 bg-white/5 rounded-full pointer-events-none"></div>
+        <div class="absolute w-32 h-32 bg-secondary/5 rounded-full pointer-events-none blur-3xl -left-20 -top-20"></div>
+
+        <div class="space-y-0.5">
+          <span class="text-[9px] font-bold uppercase tracking-widest text-rose-200">Total Payments Handover</span>
+          <h2 id="stats-total-money" class="text-3xl font-black text-secondary">₹0.00</h2>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3 pt-4 border-t border-white/10 text-[10px] uppercase font-bold tracking-wide mt-4">
+          <div class="bg-white/5 rounded-xl p-2.5 border border-white/5">
+            <div class="text-rose-200 flex items-center gap-1">
+              <span>💵 Cash Collected</span>
+            </div>
+            <div id="stats-cash-money" class="text-base font-extrabold text-white mt-1">₹0.00</div>
+          </div>
+          <div class="bg-white/5 rounded-xl p-2.5 border border-white/5">
+            <div class="text-rose-200 flex items-center gap-1">
+              <span>📱 UPI Collected</span>
+            </div>
+            <div id="stats-upi-money" class="text-base font-extrabold text-secondary mt-1">₹0.00</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Detailed Breakdown Box -->
+      <div class="bg-white rounded-3xl p-5 border border-rose-950/5 shadow-xs space-y-4">
+        <div>
+          <h4 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Breakdown by Stages</h4>
+          <p class="text-[9px] text-slate-400">Advance deposits versus post-transit final cashouts</p>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <!-- Advance sum -->
+          <div class="bg-slate-50 border border-slate-100 p-3 rounded-2xl space-y-2">
+            <span class="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">Advance Deposits</span>
+            <div id="stats-advance-total" class="text-sm font-bold text-slate-800">₹0.00</div>
+            <div class="text-[9px] text-slate-500 space-y-0.5 border-t border-dashed border-slate-200 pt-1.5 mt-1 font-sans">
+              <div class="flex justify-between">
+                <span>Cash:</span>
+                <span id="stats-advance-cash" class="font-semibold text-slate-700">₹0.00</span>
+              </div>
+              <div class="flex justify-between">
+                <span>UPI:</span>
+                <span id="stats-advance-upi" class="font-semibold text-slate-700">₹0.00</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Final sum -->
+          <div class="bg-slate-50 border border-slate-100 p-3 rounded-2xl space-y-2">
+            <span class="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">Final Handovers</span>
+            <div id="stats-final-total" class="text-sm font-bold text-slate-800">₹0.00</div>
+            <div class="text-[9px] text-slate-500 space-y-0.5 border-t border-dashed border-slate-200 pt-1.5 mt-1 font-sans">
+              <div class="flex justify-between">
+                <span>Cash:</span>
+                <span id="stats-final-cash" class="font-semibold text-slate-700">₹0.00</span>
+              </div>
+              <div class="flex justify-between">
+                <span>UPI:</span>
+                <span id="stats-final-upi" class="font-semibold text-slate-700">₹0.00</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Live Transaction ledger list -->
+    <div class="space-y-3">
+      <div class="flex items-center justify-between pl-1">
+        <h3 class="text-xs font-bold text-slate-500 uppercase tracking-widest">Transactions Ledger</h3>
+        <span id="ledger-count" class="text-[10px] font-bold text-slate-400 bg-white border border-slate-200 px-2.5 py-0.5 rounded-full shrink-0">0 Receipts</span>
+      </div>
+
+      <!-- Spinner -->
+      <div id="ledger-spinner" class="animate-pulse bg-white p-5 rounded-3xl border border-rose-955/5 space-y-3 hidden">
+        <div class="h-4 bg-slate-200 rounded w-1/4"></div>
+        <div class="h-3 bg-slate-200 rounded w-1/2"></div>
+      </div>
+
+      <!-- Receipts list container -->
+      <div id="ledger-container" class="space-y-2.5">
+        <!-- populated dynamically -->
+      </div>
+    </div>
+
+  </main>
+
+  <script type="module">
+    import { 
+      db, 
+      ref, 
+      get, 
+      onValue,
+      DB_ROOT, 
+      checkAdminSession,
+      showToast,
+      showLoader,
+      hideLoader
+    } from "./firebase-config.js";
+
+    document.addEventListener("DOMContentLoaded", async () => {
+      // Create Icons
+      lucide.createIcons();
+
+      // Verify Session
+      showLoader();
+      const verifiedSession = await checkAdminSession();
+      if (!verifiedSession) {
+        window.location.href = "admin_login.html";
+        return;
+      }
+      hideLoader();
+
+      let allOrders = {};
+      let filteredReceipts = []; // flat list of payment events
+      let currentPeriod = "all";
+
+      // Date input defaults
+      const startInput = document.getElementById("start-date-input");
+      const endInput = document.getElementById("end-date-input");
+
+      // Auto-set custom inputs with default values
+      const today = new Date();
+      endInput.value = today.toISOString().split('T')[0];
+      const outerPast = new Date();
+      outerPast.setDate(outerPast.getDate() - 30);
+      startInput.value = outerPast.toISOString().split('T')[0];
+
+      // Handle custom date input changes
+      startInput.addEventListener("change", () => {
+        if (currentPeriod === "custom") {
+          processAndRenderPayments();
+        }
+      });
+      endInput.addEventListener("change", () => {
+        if (currentPeriod === "custom") {
+          processAndRenderPayments();
+        }
+      });
+
+      // Filter Toggle Events
+      document.querySelectorAll(".period-btn").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+          document.querySelectorAll(".period-btn").forEach(b => {
+             b.className = "period-btn py-2 text-center rounded-xl text-slate-600 hover:text-slate-900 transition active:scale-95 cursor-pointer";
+          });
+          e.target.className = "period-btn py-2 text-center rounded-xl bg-primary text-secondary shadow-xs scale-102 transition active:scale-95 cursor-pointer";
+
+          currentPeriod = e.target.getAttribute("data-period");
+          const dateBlock = document.getElementById("custom-date-block");
+          if (currentPeriod === "custom") {
+            dateBlock.classList.remove("hidden");
+          } else {
+            dateBlock.classList.add("hidden");
+          }
+
+          processAndRenderPayments();
+        });
+      });
+
+      // Sync listener for Orders
+      const ordersRef = ref(db, `${DB_ROOT}/orders`);
+      document.getElementById("ledger-spinner").classList.remove("hidden");
+
+      onValue(ordersRef, (snapshot) => {
+        document.getElementById("ledger-spinner").classList.add("hidden");
+        allOrders = {};
+        if (snapshot.exists()) {
+          allOrders = snapshot.val();
+        }
+        processAndRenderPayments();
+      });
+
+      // CORE CALCULATION ENGINE
+      function processAndRenderPayments() {
+        if (!allOrders) return;
+
+        filteredReceipts = [];
+        
+        // Define limits
+        const now = new Date();
+        let limitStart = 0;
+        let limitEnd = Infinity;
+
+        if (currentPeriod === "day") {
+          const startOfToday = new Date();
+          startOfToday.setHours(0,0,0,0);
+          limitStart = startOfToday.getTime();
+        } else if (currentPeriod === "week") {
+          const startOfWeek = new Date();
+          startOfWeek.setDate(startOfWeek.getDate() - 7);
+          startOfWeek.setHours(0,0,0,0);
+          limitStart = startOfWeek.getTime();
+        } else if (currentPeriod === "custom") {
+          const sVal = startInput.value;
+          const eVal = endInput.value;
+          if (sVal) {
+            const startD = new Date(sVal);
+            startD.setHours(0, 0, 0, 0);
+            limitStart = startD.getTime();
+          }
+          if (eVal) {
+            const endD = new Date(eVal);
+            endD.setHours(23, 59, 59, 999);
+            limitEnd = endD.getTime();
+          }
+        }
+
+        // Loop orders and build flat receipts list (one order might have independent advance and final records!)
+        Object.entries(allOrders).forEach(([orderId, order]) => {
+          const orderCreatedTime = order.createdAt || 0;
+          
+          // Exclude cancelled bookings from collections counts to keep balances clear
+          if (order.status === "cancelled") return;
+
+          // 1. Advance Receipt event
+          const advAmt = parseFloat(order.advanceAmount || 0);
+          if (advAmt > 0) {
+            // we assume advance was collected at order creation time
+            if (orderCreatedTime >= limitStart && orderCreatedTime <= limitEnd) {
+              filteredReceipts.push({
+                orderId,
+                userName: order.userName || "N/A",
+                storeName: order.storeName || "N/A",
+                timestamp: orderCreatedTime,
+                type: "Advance Deposit",
+                amount: advAmt,
+                method: order.advanceMethod || "cash",
+                notes: order.notes || ""
+              });
+            }
+          }
+
+          // 2. Final Receipt event
+          const finAmt = parseFloat(order.finalAmount || 0);
+          if (finAmt > 0) {
+            // we assume final payment occurs under delivered/confirmed or updated timestamp.
+            // If order has status delivered, we can trace its timestamp or orderCreatedTime.
+            if (orderCreatedTime >= limitStart && orderCreatedTime <= limitEnd) {
+              filteredReceipts.push({
+                orderId,
+                userName: order.userName || "N/A",
+                storeName: order.storeName || "N/A",
+                timestamp: orderCreatedTime + 1000, // tiny offset for unique sorting
+                type: "Final Handover",
+                amount: finAmt,
+                method: order.finalMethod || "cash",
+                notes: "Closing settlement"
+              });
+            }
+          }
+        });
+
+        // Sort: newest payments first
+        filteredReceipts.sort((a,b) => b.timestamp - a.timestamp);
+
+        // Calculate math values
+        let totalCollected = 0;
+        let cashTotal = 0;
+        let upiTotal = 0;
+
+        let totalAdvanceCollected = 0;
+        let cashAdvance = 0;
+        let upiAdvance = 0;
+
+        let totalFinalCollected = 0;
+        let cashFinal = 0;
+        let upiFinal = 0;
+
+        filteredReceipts.forEach(rec => {
+          totalCollected += rec.amount;
+          if (rec.method === "upi") {
+            upiTotal += rec.amount;
+          } else {
+            cashTotal += rec.amount;
+          }
+
+          if (rec.type === "Advance Deposit") {
+            totalAdvanceCollected += rec.amount;
+            if (rec.method === "upi") {
+              upiAdvance += rec.amount;
+            } else {
+              cashAdvance += rec.amount;
+            }
+          } else {
+            totalFinalCollected += rec.amount;
+            if (rec.method === "upi") {
+              upiFinal += rec.amount;
+            } else {
+              cashFinal += rec.amount;
+            }
+          }
+        });
+
+        // Write metrics to UI
+        document.getElementById("stats-total-money").innerText = `₹${totalCollected.toFixed(2)}`;
+        document.getElementById("stats-cash-money").innerText = `₹${cashTotal.toFixed(2)}`;
+        document.getElementById("stats-upi-money").innerText = `₹${upiTotal.toFixed(2)}`;
+
+        document.getElementById("stats-advance-total").innerText = `₹${totalAdvanceCollected.toFixed(2)}`;
+        document.getElementById("stats-advance-cash").innerText = `₹${cashAdvance.toFixed(2)}`;
+        document.getElementById("stats-advance-upi").innerText = `₹${upiAdvance.toFixed(2)}`;
+
+        document.getElementById("stats-final-total").innerText = `₹${totalFinalCollected.toFixed(2)}`;
+        document.getElementById("stats-final-cash").innerText = `₹${cashFinal.toFixed(2)}`;
+        document.getElementById("stats-final-upi").innerText = `₹${upiFinal.toFixed(2)}`;
+
+        document.getElementById("ledger-count").innerText = `${filteredReceipts.length} Receipts`;
+
+        // Render Cards in Container
+        const container = document.getElementById("ledger-container");
+        container.innerHTML = "";
+
+        if (filteredReceipts.length === 0) {
+          container.innerHTML = `
+            <div class="bg-white rounded-3xl p-8 text-center border border-rose-950/5 shadow-xs space-y-2">
+              <div class="w-12 h-12 bg-slate-50 text-slate-400 rounded-full flex items-center justify-center mx-auto">
+                <i data-lucide="receipt-text-accent" class="w-6 h-6"></i>
+              </div>
+              <p class="text-slate-700 font-extrabold text-xs">No Payments Found</p>
+              <p class="text-[10px] text-slate-400">No advance or final handovers match the selected filter period.</p>
+            </div>
+          `;
+          lucide.createIcons();
+          return;
+        }
+
+        filteredReceipts.forEach(rec => {
+          const card = document.createElement("div");
+          card.className = "bg-white hover:border-slate-350 transition rounded-2xl p-3.5 border border-slate-100 flex items-center justify-between shadow-xs";
+          
+          const isUpi = rec.method === "upi";
+          const methodBadge = isUpi 
+            ? `<span class="bg-blue-50 text-blue-700 border border-blue-200 px-2.5 py-0.5 rounded-full text-[9px] uppercase tracking-wider font-sans font-extrabold flex items-center gap-1 shrink-0">📱 UPI</span>`
+            : `<span class="bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-0.5 rounded-full text-[9px] uppercase tracking-wider font-sans font-extrabold flex items-center gap-1 shrink-0">💵 Cash</span>`;
+
+          const typeBadge = rec.type === "Advance Deposit"
+            ? `<span class="text-[9px] text-[#7d0000] font-extrabold uppercase tracking-widest">ADVANCE</span>`
+            : `<span class="text-[9px] text-purple-700 font-extrabold uppercase tracking-widest">FINAL</span>`;
+
+          const dateStr = new Date(rec.timestamp).toLocaleDateString("en-IN", {
+            day: 'numeric',
+            month: 'short',
+            hour: '2-digit',
+            minute: '2-digit'
+          });
+
+          card.innerHTML = `
+            <div class="space-y-1 min-w-0 pr-3">
+              <div class="flex items-center gap-2">
+                ${typeBadge}
+                <span class="text-[9px] text-slate-400 bg-slate-50 border border-slate-200 px-1.5 py-0.5 rounded font-mono">${rec.orderId}</span>
+              </div>
+              <h4 class="font-bold text-slate-800 text-xs truncate">${rec.userName}</h4>
+              <p class="text-[9px] text-slate-400 truncate">${rec.storeName} • ${dateStr}</p>
+            </div>
+            <div class="text-right space-y-1 shrink-0">
+              <div class="text-xs font-black text-slate-900">₹${rec.amount.toFixed(2)}</div>
+              ${methodBadge}
+            </div>
+          `;
+          container.appendChild(card);
+        });
+
+        lucide.createIcons();
+      }
+
+      // HIGH-FIDELITY CLIENT-SIDE PDF REPORT EXPORTER
+      document.getElementById("export-payments-pdf").addEventListener("click", () => {
+        try {
+          showLoader();
+
+          const { jsPDF } = window.jspdf;
+          const doc = new jsPDF({
+            orientation: "portrait",
+            unit: "mm",
+            format: "a4"
+          });
+
+          // Crimson Palette colors
+          const primaryColor = [125, 0, 0];
+          const accentColor = [255, 213, 74];
+          const darkText = [30, 41, 59];
+
+          // Top Header Banner
+          doc.setFillColor(...primaryColor);
+          doc.rect(0, 0, 210, 38, "F");
+
+          // Accent Yellow strip
+          doc.setFillColor(...accentColor);
+          doc.rect(0, 38, 210, 2.5, "F");
+
+          // Icon background box inside banner
+          const logoImg = document.getElementById("app-logo");
+          if (logoImg) {
+            try {
+              doc.setFillColor(255, 255, 255);
+              doc.roundedRect(14, 5, 14, 14, 3, 3, "F");
+              doc.addImage(logoImg, "PNG", 15, 6, 12, 12);
+            } catch (err) {
+              console.error("PDF logo load error: ", err);
+            }
+          }
+
+          // Header Text
+          doc.setTextColor(255, 255, 255);
+          doc.setFont("Helvetica", "bold");
+          doc.setFontSize(15);
+          doc.text("BHIKHARAM CHANDMAL", 32, 13);
+
+          doc.setFont("Helvetica", "normal");
+          doc.setFontSize(8.5);
+          doc.setTextColor(...accentColor);
+          doc.text("PAYMENTS & COLLECTIONS RECONCILIATION LEDGER", 32, 19);
+
+          // Build filter period label representation
+          let periodLabelText = "ALL TIME COLLECTIONS";
+          if (currentPeriod === "day") {
+            const currentFormatted = new Date().toLocaleDateString("en-IN", { day: 'numeric', month: 'short', year: 'numeric' });
+            periodLabelText = `TODAY'S AUDIT (${currentFormatted.toUpperCase()})`;
+          } else if (currentPeriod === "week") {
+            const startOfLabelWeek = new Date();
+            startOfLabelWeek.setDate(startOfLabelWeek.getDate() - 7);
+            const formattedStart = startOfLabelWeek.toLocaleDateString("en-IN", { day: 'numeric', month: 'short' });
+            const formattedEnd = new Date().toLocaleDateString("en-IN", { day: 'numeric', month: 'short', year: 'numeric' });
+            periodLabelText = `THIS WEEK (${formattedStart.toUpperCase()} TO ${formattedEnd.toUpperCase()})`;
+          } else if (currentPeriod === "custom") {
+            const sIn = startInput.value;
+            const eIn = endInput.value;
+            if (sIn && eIn) {
+              const d1 = new Date(sIn).toLocaleDateString("en-IN", { day: 'numeric', month: 'short' });
+              const d2 = new Date(eIn).toLocaleDateString("en-IN", { day: 'numeric', month: 'short', year: 'numeric' });
+              periodLabelText = `CUSTOM DATES (${d1.toUpperCase()} TO ${d2.toUpperCase()})`;
+            }
+          }
+          doc.text(`AUDIT TIMEFRAME: ${periodLabelText}`, 14, 25);
+
+          // Meta statistics right sidebar inside header
+          doc.setTextColor(255, 255, 255);
+          doc.setFontSize(8.5);
+          const currentTimestamp = new Date().toLocaleString("en-IN", { hour12: true });
+          doc.text(`Generated: ${currentTimestamp}`, 135, 30);
+          doc.text(`Receipts count: ${filteredReceipts.length} entries`, 135, 34);
+
+          // Content heading
+          doc.setTextColor(...darkText);
+          doc.setFont("Helvetica", "bold");
+          doc.setFontSize(11);
+          doc.text("COLLECTIONS SUMMARIES AUDIT", 14, 48);
+
+          doc.setFont("Helvetica", "normal");
+          doc.setFontSize(8.5);
+          doc.setTextColor(100, 116, 139);
+          doc.text("Audited parameters across selected chronological period.", 14, 52);
+
+          // Calculate summary values again for consistency
+          let totalSalesVal = 0;
+          let cashValueVal = 0;
+          let upiValueVal = 0;
+          let advTotalVal = 0;
+          let finTotalVal = 0;
+
+          filteredReceipts.forEach(rec => {
+            totalSalesVal += rec.amount;
+            if (rec.method === "upi") upiValueVal += rec.amount;
+            else cashValueVal += rec.amount;
+
+            if (rec.type === "Advance Deposit") advTotalVal += rec.amount;
+            else finTotalVal += rec.amount;
+          });
+
+          // Generate Grid table for summaries using AutoTable
+          const sumHeaders = [["Financial Metric Description", "Amount (INR)"]];
+          const sumRows = [
+            ["Total Collected Payments Balance", `INR ${totalSalesVal.toFixed(2)}`],
+            ["Total Cash Received (💵)", `INR ${cashValueVal.toFixed(2)}`],
+            ["Total UPI Transfers Received (📱)", `INR ${upiValueVal.toFixed(2)}`],
+            ["Advance Deposit Sums", `INR ${advTotalVal.toFixed(2)}`],
+            ["Final Dispatch Settlements", `INR ${finTotalVal.toFixed(2)}`]
+          ];
+
+          doc.autoTable({
+            startY: 55,
+            head: sumHeaders,
+            body: sumRows,
+            theme: "striped",
+            headStyles: { fillColor: primaryColor, textColor: [255, 255, 255], fontStyle: "bold", fontSize: 9 },
+            bodyStyles: { fontStyle: "bold", textColor: darkText, fontSize: 8.5 },
+            margin: { left: 14, right: 14 }
+          });
+
+          // Draw Divider line
+          const currentY = doc.lastAutoTable.finalY + 10;
+          doc.setDrawColor(226, 232, 240);
+          doc.line(14, currentY, 196, currentY);
+
+          // Transactions Ledger header
+          doc.setFont("Helvetica", "bold");
+          doc.setFontSize(11.5);
+          doc.setTextColor(...darkText);
+          doc.text("DETAILED TRANSACTION LEDGER LOGS", 14, currentY + 7);
+
+          doc.setFont("Helvetica", "normal");
+          doc.setFontSize(8.5);
+          doc.setTextColor(100, 116, 139);
+          doc.text("Individual receipts recorded chronologically during the report period.", 14, currentY + 11);
+
+          // Payments logs list
+          const logHeaders = [["Receipt ID", "Timestamp / Date", "Customer", "Fulfillment Store", "Type", "Method", "Amount Paid"]];
+          const logRows = filteredReceipts.map(rec => {
+            const timeStr = new Date(rec.timestamp).toLocaleDateString("en-IN", {
+              day: 'numeric',
+              month: 'short',
+              hour: '2-digit',
+              minute: '2-digit'
+            });
+            return [
+              rec.orderId,
+              timeStr,
+              rec.userName,
+              rec.storeName,
+              rec.type.toUpperCase(),
+              rec.method.toUpperCase(),
+              `INR ${rec.amount.toFixed(2)}`
+            ];
+          });
+
+          doc.autoTable({
+            startY: currentY + 14,
+            head: logHeaders,
+            body: logRows,
+            theme: "grid",
+            headStyles: { fillColor: [40, 40, 40], textColor: [255, 255, 255], fontSize: 8, fontStyle: "bold" },
+            bodyStyles: { textColor: darkText, fontSize: 7.5 },
+            columnStyles: {
+              0: { cellWidth: 22 },
+              1: { cellWidth: 28 },
+              2: { cellWidth: 32 },
+              3: { cellWidth: 38 },
+              4: { cellWidth: 28 },
+              5: { cellWidth: 18, fontStyle: "bold" },
+              6: { halign: "right", fontStyle: "bold" }
+            },
+            margin: { left: 14, right: 14 }
+          });
+
+          // Footer Notice
+          const finalY = doc.lastAutoTable.finalY + 15;
+          doc.setFont("Helvetica", "bold");
+          doc.setFontSize(8);
+          doc.setTextColor(...primaryColor);
+          doc.text("Bhikharam Chandmal Sweetmeats Private Limited - Autogenerated Report Ledger", 14, finalY);
+
+          doc.setFont("Helvetica", "normal");
+          doc.setFontSize(7.5);
+          doc.setTextColor(148, 163, 184);
+          doc.text("This accounting dispatch is secure. Direct discrepancies to the central operations supervisor.", 14, finalY + 4);
+
+          // Save report
+          const fileDateName = new Date().toISOString().split('T')[0];
+          doc.save(`Payments_Audit_Ledger_${fileDateName}.pdf`);
+          showToast("PDF report downloaded successfully", "success");
+
+        } catch (err) {
+          console.error("PDF download error: ", err);
+          showToast("PDF Engine failed: " + err.message, "error");
+        } finally {
+          hideLoader();
+        }
+      });
+
+    });
+  </script>
+</body>
+</html>

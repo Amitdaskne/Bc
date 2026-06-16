@@ -195,45 +195,69 @@
         <div class="space-y-3.5 border-t border-slate-100 pt-4">
           <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wide">Update Payments Received</h4>
 
-          <!-- Advance Amount Paid -->
-          <div>
-            <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Advance Amount Paid (₹)</label>
-            <div class="relative">
-              <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-500 font-bold text-xs select-none">₹</span>
-              <input 
-                type="number" 
-                id="form-advance" 
-                placeholder="0.00" 
-                step="0.01" 
-                min="0"
-                class="w-full pl-7 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-xs focus:ring-2 focus:ring-primary/20 outline-none transition font-semibold"
+          <!-- Advance Amount Paid & Method -->
+          <div class="grid grid-cols-2 gap-35">
+            <div>
+              <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Advance Paid (₹)</label>
+              <div class="relative">
+                <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-500 font-bold text-xs select-none">₹</span>
+                <input 
+                  type="number" 
+                  id="form-advance" 
+                  placeholder="0.00" 
+                  step="0.01" 
+                  min="0"
+                  class="w-full pl-7 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-xs focus:ring-2 focus:ring-primary/20 outline-none transition font-semibold"
+                >
+              </div>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Adv. Mode</label>
+              <select 
+                id="form-advance-method"
+                class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-xs font-semibold focus:ring-2 focus:ring-primary/20 outline-none transition cursor-pointer"
               >
+                <option value="cash">💵 Cash</option>
+                <option value="upi">📱 UPI</option>
+              </select>
             </div>
           </div>
 
-          <!-- Final Amount Paid -->
-          <div>
-            <div class="flex items-center justify-between mb-1.5">
-              <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest leading-none">Final Paid (₹)</label>
-              <button 
-                type="button" 
-                id="btn-admin-full-payment" 
-                class="text-[10px] font-bold text-primary hover:text-rose-950 flex items-center gap-1 transition cursor-pointer"
-              >
-                <i data-lucide="check-square" class="w-3.5 h-3.5"></i>
-                <span>Full Payment</span>
-              </button>
+          <!-- Final Amount Paid & Method -->
+          <div class="grid grid-cols-2 gap-35">
+            <div>
+              <div class="flex items-center justify-between mb-1.5">
+                <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest leading-none">Final Paid (₹)</label>
+                <button 
+                  type="button" 
+                  id="btn-admin-full-payment" 
+                  class="text-[9px] font-bold text-primary hover:text-rose-950 flex items-center gap-0.5 transition cursor-pointer"
+                >
+                  <i data-lucide="check-square" class="w-3.5 h-3.5"></i>
+                  <span>Full</span>
+                </button>
+              </div>
+              <div class="relative">
+                <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-500 font-bold text-xs select-none">₹</span>
+                <input 
+                  type="number" 
+                  id="form-final" 
+                  placeholder="0.00" 
+                  step="0.01" 
+                  min="0"
+                  class="w-full pl-7 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-xs focus:ring-2 focus:ring-primary/20 outline-none transition font-semibold"
+                >
+              </div>
             </div>
-            <div class="relative">
-              <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-500 font-bold text-xs select-none">₹</span>
-              <input 
-                type="number" 
-                id="form-final" 
-                placeholder="0.00" 
-                step="0.01" 
-                min="0"
-                class="w-full pl-7 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-xs focus:ring-2 focus:ring-primary/20 outline-none transition font-semibold"
+            <div>
+              <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Final Mode</label>
+              <select 
+                id="form-final-method"
+                class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-xs font-semibold focus:ring-2 focus:ring-primary/20 outline-none transition cursor-pointer"
               >
+                <option value="cash">💵 Cash</option>
+                <option value="upi">📱 UPI</option>
+              </select>
             </div>
           </div>
         </div>
@@ -342,7 +366,9 @@
       const formOrderKey = document.getElementById("form-order-key");
       const formStatus = document.getElementById("form-status");
       const formAdvance = document.getElementById("form-advance");
+      const formAdvanceMethod = document.getElementById("form-advance-method");
       const formFinal = document.getElementById("form-final");
+      const formFinalMethod = document.getElementById("form-final-method");
       const deleteOrderBtn = document.getElementById("delete-order-btn");
       const btnAdminFullPayment = document.getElementById("btn-admin-full-payment");
 
@@ -768,7 +794,9 @@
 
         formStatus.value = order.status || "pending";
         formAdvance.value = order.advanceAmount || "0";
+        formAdvanceMethod.value = order.advanceMethod || "cash";
         formFinal.value = order.finalAmount || "0";
+        formFinalMethod.value = order.finalMethod || "cash";
 
         // Load items details in modal-items-list
         const modalItemsList = document.getElementById("modal-items-list");
@@ -841,7 +869,9 @@
         const key = formOrderKey.value;
         const status = formStatus.value;
         const advanceAmount = parseFloat(formAdvance.value || 0);
+        const advanceMethod = formAdvanceMethod.value;
         const finalAmount = parseFloat(formFinal.value || 0);
+        const finalMethod = formFinalMethod.value;
 
         ordersSpinner.classList.remove("hidden");
         orderModal.classList.add("hidden");
@@ -852,7 +882,9 @@
           await update(updateRef, {
             status,
             advanceAmount,
-            finalAmount
+            advanceMethod,
+            finalAmount,
+            finalMethod
           });
           showToast("Order status and payments updated successfully!", "success");
         } catch (err) {
