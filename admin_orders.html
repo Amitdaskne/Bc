@@ -239,14 +239,27 @@
           </div>
         </div>
 
-        <!-- Submit Button -->
-        <button 
-          type="submit" 
-          class="w-full bg-primary hover:bg-rose-950 active:scale-[0.97] text-white py-3 px-4 rounded-xl font-bold text-xs shadow-md transition flex items-center justify-center gap-1.5 pt-2.5 pb-2.5"
-        >
-          <i data-lucide="save" class="w-4 h-4"></i>
-          <span>Save Order Status & Payments</span>
-        </button>
+        <!-- Action Buttons -->
+        <div class="space-y-2 pt-2">
+          <!-- Submit Button -->
+          <button 
+            type="submit" 
+            class="w-full bg-primary hover:bg-rose-950 active:scale-[0.97] text-white py-3 px-4 rounded-xl font-bold text-xs shadow-md transition flex items-center justify-center gap-1.5 pt-2.5 pb-2.5"
+          >
+            <i data-lucide="save" class="w-4 h-4"></i>
+            <span>Save Order Status & Payments</span>
+          </button>
+
+          <!-- Delete Button -->
+          <button 
+            type="button" 
+            id="delete-order-btn"
+            class="w-full bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 hover:border-rose-300 active:scale-[0.97] py-3 px-4 rounded-xl font-bold text-xs shadow-xs transition flex items-center justify-center gap-1.5 pt-2.5 pb-2.5"
+          >
+            <i data-lucide="trash-2" class="w-4 h-4 text-rose-600"></i>
+            <span>Delete Order Booking</span>
+          </button>
+        </div>
       </form>
     </div>
   </div>
@@ -282,10 +295,12 @@
       ref, 
       get, 
       update, 
+      remove,
       onValue, 
       DB_ROOT, 
       checkAdminSession, 
-      showToast 
+      showToast,
+      showConfirmPopup
     } from "./firebase-config.js";
 
     let allOrders = {};
@@ -318,6 +333,7 @@
       const formStatus = document.getElementById("form-status");
       const formAdvance = document.getElementById("form-advance");
       const formFinal = document.getElementById("form-final");
+      const deleteOrderBtn = document.getElementById("delete-order-btn");
 
       // Search & Filters Elements
       const searchInput = document.getElementById("search-input");
@@ -761,6 +777,33 @@
       closeModal.onclick = () => {
         orderModal.classList.add("hidden");
         document.body.classList.remove("overflow-hidden");
+      };
+
+      // Delete Order behavior with elegant popup confirmation
+      deleteOrderBtn.onclick = async () => {
+        const key = formOrderKey.value;
+        if (!key) return;
+
+        const isConfirmed = await showConfirmPopup(
+          "Delete Order Booking",
+          `Are you sure you want to permanently delete order booking "${key}"? This action is irreversible and will remove this order from all transaction books.`
+        );
+
+        if (isConfirmed) {
+          ordersSpinner.classList.remove("hidden");
+          orderModal.classList.add("hidden");
+          document.body.classList.remove("overflow-hidden");
+
+          try {
+            await remove(ref(db, `${DB_ROOT}/orders/${key}`));
+            showToast("Order Booking deleted successfully", "success");
+          } catch (err) {
+            console.error("Error deleting order:", err);
+            showToast("Delete failed: " + err.message, "error");
+          } finally {
+            ordersSpinner.classList.add("hidden");
+          }
+        }
       };
 
       // Form submission click updates status and values
