@@ -1,0 +1,24 @@
+name: Build APK
+on: [push]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup Node
+        uses: actions/setup-node@v2
+        with:
+          node-version: '16'
+      - name: Build
+        run: |
+          npm install -g cordova
+          cordova create myApp com.example.app
+          cd myApp
+          cordova platform add android
+          cp ../index.html www/index.html
+          cordova build android
+      - name: Upload APK
+        uses: actions/upload-artifact@v2
+        with:
+          name: app-debug
+          path: myApp/platforms/android/app/build/outputs/apk/debug/app-debug.apk
